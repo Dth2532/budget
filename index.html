@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ballin on a Budget</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 400px;
+      margin: 50px auto;
+      padding: 20px;
+    }
+    .form-container {
+      background: #f5f5f5;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    .form-container h2 {
+      text-align: center;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    .toggle-link {
+      text-align: center;
+      margin-top: 10px;
+      color: #007bff;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+    .error {
+      color: red;
+      font-size: 14px;
+      margin-top: 10px;
+    }
+    #user-info {
+      text-align: center;
+    }
+    #logout-btn {
+      background: #dc3545;
+      margin-top: 20px;
+    }
+    #logout-btn:hover {
+      background: #c82333;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <header style="text-align: center; margin-bottom: 30px;">
+    <h1 style="color: #007bff; margin-bottom: 5px;">Ballin on a Budget</h1>
+    <p style="color: #666; font-size: 14px;">Spend smart, live large</p>
+  </header>
+
+  <!-- Sign Up Form -->
+  <div id="signup-form" class="form-container">
+    <h2>Sign Up</h2>
+    <input type="email" id="signup-email" placeholder="Email" required>
+    <input type="password" id="signup-password" placeholder="Password (min 6 characters)" required>
+    <button id="signup-btn">Sign Up</button>
+    <div id="signup-error" class="error"></div>
+    <div class="toggle-link" id="show-login">Already have an account? Login</div>
+  </div>
+
+  <!-- Login Form -->
+  <div id="login-form" class="form-container hidden">
+    <h2>Login</h2>
+    <input type="email" id="login-email" placeholder="Email" required>
+    <input type="password" id="login-password" placeholder="Password" required>
+    <button id="login-btn">Login</button>
+    <div id="login-error" class="error"></div>
+    <div class="toggle-link" id="show-signup">Don't have an account? Sign Up</div>
+  </div>
+
+  <!-- Logged In State -->
+  <div id="user-info" class="hidden">
+    <h2>Welcome!</h2>
+    <p>You're logged in as: <strong id="user-email"></strong></p>
+    <p>User ID: <span id="user-id"></span></p>
+    <button id="logout-btn">Logout</button>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBbyOgSbmwxhqYaoPih0v_PpKQK208u0zU",
+      authDomain: "harris-house-ef670.firebaseapp.com",
+      projectId: "harris-house-ef670",
+      storageBucket: "harris-house-ef670.firebasestorage.app",
+      messagingSenderId: "398594469140",
+      appId: "1:398594469140:web:1bf73a98029f5800b06601",
+      measurementId: "G-YWP5748HE8"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    // DOM elements
+    const signupForm = document.getElementById('signup-form');
+    const loginForm = document.getElementById('login-form');
+    const userInfo = document.getElementById('user-info');
+    const signupError = document.getElementById('signup-error');
+    const loginError = document.getElementById('login-error');
+
+    // Toggle between signup and login
+    document.getElementById('show-login').addEventListener('click', () => {
+      signupForm.classList.add('hidden');
+      loginForm.classList.remove('hidden');
+      signupError.textContent = '';
+    });
+
+    document.getElementById('show-signup').addEventListener('click', () => {
+      loginForm.classList.add('hidden');
+      signupForm.classList.remove('hidden');
+      loginError.textContent = '';
+    });
+
+    // Sign Up
+    document.getElementById('signup-btn').addEventListener('click', () => {
+      const email = document.getElementById('signup-email').value;
+      const password = document.getElementById('signup-password').value;
+      signupError.textContent = '';
+
+      if (!email || !password) {
+        signupError.textContent = 'Please fill in all fields';
+        return;
+      }
+
+      if (password.length < 6) {
+        signupError.textContent = 'Password must be at least 6 characters';
+        return;
+      }
+
+      createUserWithEmailAndPassword(auth, email, password)
+        .then((userCredential) => {
+          console.log('User created:', userCredential.user);
+          // Clear form
+          document.getElementById('signup-email').value = '';
+          document.getElementById('signup-password').value = '';
+        })
+        .catch((error) => {
+          signupError.textContent = error.message;
+        });
+    });
+
+    // Login
+    document.getElementById('login-btn').addEventListener('click', () => {
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-password').value;
+      loginError.textContent = '';
+
+      if (!email || !password) {
+        loginError.textContent = 'Please fill in all fields';
+        return;
+      }
+
+      signInWithEmailAndPassword(auth, email, password)
+        .then((userCredential) => {
+          console.log('Logged in:', userCredential.user);
+          // Clear form
+          document.getElementById('login-email').value = '';
+          document.getElementById('login-password').value = '';
+        })
+        .catch((error) => {
+          loginError.textContent = error.message;
+        });
+    });
+
+    // Logout
+    document.getElementById('logout-btn').addEventListener('click', () => {
+      signOut(auth)
+        .then(() => {
+          console.log('Logged out');
+        })
+        .catch((error) => {
+          console.error('Logout error:', error);
+        });
+    });
+
+    // Listen for auth state changes
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        // User is signed in
+        signupForm.classList.add('hidden');
+        loginForm.classList.add('hidden');
+        userInfo.classList.remove('hidden');
+        document.getElementById('user-email').textContent = user.email;
+        document.getElementById('user-id').textContent = user.uid;
+        
+        console.log('User authenticated:', user.uid);
+        // TODO: Load user's budget data here
+      } else {
+        // User is signed out
+        signupForm.classList.remove('hidden');
+        loginForm.classList.add('hidden');
+        userInfo.classList.add('hidden');
+      }
+    });
+  </script>
+
+</body>
+</html>
