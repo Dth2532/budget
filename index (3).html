@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ballin on a Budget</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 400px;
+      margin: 50px auto;
+      padding: 20px;
+    }
+    .form-container {
+      background: #f5f5f5;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    .form-container h2 {
+      text-align: center;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    .toggle-link {
+      text-align: center;
+      margin-top: 10px;
+      color: #007bff;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+    .error {
+      color: red;
+      font-size: 14px;
+      margin-top: 10px;
+    }
+    #user-info {
+      text-align: center;
+    }
+    #logout-btn {
+      background: #dc3545;
+      margin-top: 20px;
+    }
+    #logout-btn:hover {
+      background: #c82333;
+    }
+    .hidden {
+      display: none;
+    }
+    .transaction-item {
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 12px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .transaction-item.income {
+      border-left: 4px solid #28a745;
+    }
+    .transaction-item.expense {
+      border-left: 4px solid #dc3545;
+    }
+    .transaction-amount {
+      font-size: 18px;
+      font-weight: bold;
+    }
+    .transaction-amount.income {
+      color: #28a745;
+    }
+    .transaction-amount.expense {
+      color: #dc3545;
+    }
+    .transaction-details {
+      flex: 1;
+    }
+    .transaction-category {
+      font-size: 12px;
+      color: #666;
+      text-transform: capitalize;
+    }
+    .transaction-date {
+      font-size: 12px;
+      color: #999;
+    }
+  </style>
+</head>
+<body>
+
+  <header style="text-align: center; margin-bottom: 30px;">
+    <h1 style="color: #007bff; margin-bottom: 5px;">Ballin on a Budget</h1>
+    <p style="color: #666; font-size: 14px;">Spend smart, live large</p>
+  </header>
+
+  <!-- Sign Up Form -->
+  <div id="signup-form" class="form-container">
+    <h2>Sign Up</h2>
+    <input type="email" id="signup-email" placeholder="Email" required>
+    <input type="password" id="signup-password" placeholder="Password (min 6 characters)" required>
+    <button id="signup-btn">Sign Up</button>
+    <div id="signup-error" class="error"></div>
+    <div class="toggle-link" id="show-login">Already have an account? Login</div>
+  </div>
+
+  <!-- Login Form -->
+  <div id="login-form" class="form-container hidden">
+    <h2>Login</h2>
+    <input type="email" id="login-email" placeholder="Email" required>
+    <input type="password" id="login-password" placeholder="Password" required>
+    <button id="login-btn">Login</button>
+    <div id="login-error" class="error"></div>
+    <div class="toggle-link" id="show-signup">Don't have an account? Sign Up</div>
+  </div>
+
+  <!-- Logged In State -->
+  <div id="user-info" class="hidden">
+    <h2>Welcome!</h2>
+    <p>You're logged in as: <strong id="user-email"></strong></p>
+    <p>User ID: <span id="user-id"></span></p>
+    <button id="logout-btn">Logout</button>
+  </div>
+
+  <!-- Household Setup -->
+  <div id="household-setup" class="hidden">
+    <div class="form-container">
+      <h2>Set Up Your Household</h2>
+      <p style="text-align: center; color: #666; margin-bottom: 20px;">
+        Create a new household or join an existing one
+      </p>
+      
+      <button id="create-household-btn" style="margin-bottom: 10px;">Create New Household</button>
+      <button id="join-household-btn" style="background: #28a745;">Join Existing Household</button>
+    </div>
+  </div>
+
+  <!-- Create Household Form -->
+  <div id="create-household-form" class="form-container hidden">
+    <h2>Create Household</h2>
+    <input type="text" id="household-name" placeholder="Household Name (e.g., Harris Household)" required>
+    <button id="submit-create-household">Create Household</button>
+    <div id="create-household-error" class="error"></div>
+    <div class="toggle-link" id="back-to-household-setup">Back</div>
+  </div>
+
+  <!-- Join Household Form -->
+  <div id="join-household-form" class="form-container hidden">
+    <h2>Join Household</h2>
+    <input type="text" id="invite-code" placeholder="Enter Invite Code" required>
+    <button id="submit-join-household">Join Household</button>
+    <div id="join-household-error" class="error"></div>
+    <div class="toggle-link" id="back-to-household-setup-2">Back</div>
+  </div>
+
+  <!-- Main App (Budget Dashboard) -->
+  <div id="main-app" class="hidden">
+    <h2>Budget Dashboard</h2>
+    <p>Household: <strong id="current-household-name"></strong></p>
+    <p style="font-size: 12px; color: #666;">Invite Code: <strong id="household-invite-code"></strong></p>
+    
+    <!-- Add Transaction Form -->
+    <div class="form-container" style="margin-top: 20px;">
+      <h3 style="text-align: center;">Add Transaction</h3>
+      
+      <select id="transaction-type" style="width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px;">
+        <option value="expense">Expense</option>
+        <option value="income">Income</option>
+      </select>
+      
+      <input type="number" id="transaction-amount" placeholder="Amount" step="0.01" required>
+      
+      <select id="transaction-category" style="width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px;">
+        <option value="">Select Category</option>
+        <optgroup label="Common Expenses">
+          <option value="groceries">Groceries</option>
+          <option value="dining">Dining Out</option>
+          <option value="utilities">Utilities</option>
+          <option value="rent">Rent/Mortgage</option>
+          <option value="transportation">Transportation</option>
+          <option value="entertainment">Entertainment</option>
+          <option value="healthcare">Healthcare</option>
+          <option value="shopping">Shopping</option>
+          <option value="subscriptions">Subscriptions</option>
+        </optgroup>
+        <optgroup label="Income">
+          <option value="salary">Salary</option>
+          <option value="freelance">Freelance</option>
+          <option value="other-income">Other Income</option>
+        </optgroup>
+        <optgroup label="Other">
+          <option value="other">Other</option>
+        </optgroup>
+      </select>
+      
+      <input type="text" id="transaction-description" placeholder="Description (optional)">
+      
+      <input type="date" id="transaction-date" required>
+      
+      <label style="display: flex; align-items: center; margin: 10px 0; cursor: pointer;">
+        <input type="checkbox" id="transaction-recurring" style="width: auto; margin-right: 10px;">
+        <span>Recurring Bill (auto-creates monthly)</span>
+      </label>
+      
+      <div id="recurring-options" class="hidden" style="background: #f9f9f9; padding: 15px; border-radius: 4px; margin: 10px 0;">
+        <label style="display: block; margin-bottom: 5px; font-size: 14px;">Day of month (1-31):</label>
+        <input type="number" id="recurring-day" min="1" max="31" placeholder="e.g., 15" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+      </div>
+      
+      <button id="add-transaction-btn">Add Transaction</button>
+      <div id="transaction-error" class="error"></div>
+    </div>
+    
+    <!-- Transactions List -->
+    <div style="margin-top: 30px;">
+      <h3 style="text-align: center;">Recent Transactions</h3>
+      <div id="transactions-list" style="margin-top: 15px;">
+        <p style="text-align: center; color: #666;">No transactions yet</p>
+      </div>
+    </div>
+    
+    <button id="logout-btn-main" style="margin-top: 20px;">Logout</button>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, collection, addDoc, query, where, getDocs, orderBy, limit } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBbyOgSbmwxhqYaoPih0v_PpKQK208u0zU",
+      authDomain: "harris-house-ef670.firebaseapp.com",
+      projectId: "harris-house-ef670",
+      storageBucket: "harris-house-ef670.firebasestorage.app",
+      messagingSenderId: "398594469140",
+      appId: "1:398594469140:web:1bf73a98029f5800b06601",
+      measurementId: "G-YWP5748HE8"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // DOM elements
+    const signupForm = document.getElementById('signup-form');
+    const loginForm = document.getElementById('login-form');
+    const userInfo = document.getElementById('user-info');
+    const signupError = document.getElementById('signup-error');
+    const loginError = document.getElementById('login-error');
+    const householdSetup = document.getElementById('household-setup');
+    const createHouseholdForm = document.getElementById('create-household-form');
+    const joinHouseholdForm = document.getElementById('join-household-form');
+    const mainApp = document.getElementById('main-app');
+
+    // Toggle between signup and login
+    document.getElementById('show-login').addEventListener('click', () => {
+      signupForm.classList.add('hidden');
+      loginForm.classList.remove('hidden');
+      signupError.textContent = '';
+    });
+
+    document.getElementById('show-signup').addEventListener('click', () => {
+      loginForm.classList.add('hidden');
+      signupForm.classList.remove('hidden');
+      loginError.textContent = '';
+    });
+
+    // Household setup navigation
+    document.getElementById('create-household-btn').addEventListener('click', () => {
+      householdSetup.classList.add('hidden');
+      createHouseholdForm.classList.remove('hidden');
+    });
+
+    document.getElementById('join-household-btn').addEventListener('click', () => {
+      householdSetup.classList.add('hidden');
+      joinHouseholdForm.classList.remove('hidden');
+    });
+
+    document.getElementById('back-to-household-setup').addEventListener('click', () => {
+      createHouseholdForm.classList.add('hidden');
+      householdSetup.classList.remove('hidden');
+      document.getElementById('create-household-error').textContent = '';
+    });
+
+    document.getElementById('back-to-household-setup-2').addEventListener('click', () => {
+      joinHouseholdForm.classList.add('hidden');
+      householdSetup.classList.remove('hidden');
+      document.getElementById('join-household-error').textContent = '';
+    });
+
+    // Toggle recurring options
+    document.getElementById('transaction-recurring').addEventListener('change', (e) => {
+      const recurringOptions = document.getElementById('recurring-options');
+      if (e.target.checked) {
+        recurringOptions.classList.remove('hidden');
+      } else {
+        recurringOptions.classList.add('hidden');
+      }
+    });
+
+    // Set today's date as default
+    document.getElementById('transaction-date').valueAsDate = new Date();
+
+    // Function to load transactions for the household
+    async function loadTransactions(householdId) {
+      try {
+        // Try with orderBy first
+        let q = query(
+          collection(db, 'transactions'),
+          where('householdId', '==', householdId),
+          orderBy('date', 'desc'),
+          limit(20)
+        );
+        
+        let querySnapshot;
+        try {
+          querySnapshot = await getDocs(q);
+        } catch (indexError) {
+          // If index doesn't exist, query without orderBy
+          console.log('Index not found, querying without orderBy');
+          q = query(
+            collection(db, 'transactions'),
+            where('householdId', '==', householdId),
+            limit(20)
+          );
+          querySnapshot = await getDocs(q);
+        }
+        
+        const transactionsList = document.getElementById('transactions-list');
+        
+        if (querySnapshot.empty) {
+          transactionsList.innerHTML = '<p style="text-align: center; color: #666;">No transactions yet</p>';
+          return;
+        }
+        
+        transactionsList.innerHTML = '';
+        
+        // Convert to array and sort by date
+        const transactions = [];
+        querySnapshot.forEach((doc) => {
+          transactions.push({ id: doc.id, ...doc.data() });
+        });
+        
+        // Sort by date descending
+        transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+        
+        transactions.forEach((transaction) => {
+          const transactionDiv = document.createElement('div');
+          transactionDiv.className = `transaction-item ${transaction.type}`;
+          
+          const amount = transaction.type === 'income' ? '+' : '-';
+          const formattedAmount = `${amount}$${parseFloat(transaction.amount).toFixed(2)}`;
+          
+          transactionDiv.innerHTML = `
+            <div class="transaction-details">
+              <div style="font-weight: bold;">${transaction.description || transaction.category}</div>
+              <div class="transaction-category">${transaction.category}${transaction.isRecurring ? ' • Recurring' : ''}</div>
+              <div class="transaction-date">${transaction.date}</div>
+            </div>
+            <div class="transaction-amount ${transaction.type}">${formattedAmount}</div>
+          `;
+          
+          transactionsList.appendChild(transactionDiv);
+        });
+      } catch (error) {
+        console.error('Error loading transactions:', error);
+        document.getElementById('transactions-list').innerHTML = '<p style="text-align: center; color: #666;">No transactions yet</p>';
+      }
+    }
+
+    // Add Transaction
+    document.getElementById('add-transaction-btn').addEventListener('click', async () => {
+      const type = document.getElementById('transaction-type').value;
+      const amount = document.getElementById('transaction-amount').value;
+      const category = document.getElementById('transaction-category').value;
+      const description = document.getElementById('transaction-description').value;
+      const date = document.getElementById('transaction-date').value;
+      const isRecurring = document.getElementById('transaction-recurring').checked;
+      const recurringDay = document.getElementById('recurring-day').value;
+      const errorDiv = document.getElementById('transaction-error');
+      errorDiv.textContent = '';
+
+      // Validation
+      if (!amount || !category || !date) {
+        errorDiv.textContent = 'Please fill in all required fields';
+        return;
+      }
+
+      if (parseFloat(amount) <= 0) {
+        errorDiv.textContent = 'Amount must be greater than 0';
+        return;
+      }
+
+      if (isRecurring && (!recurringDay || recurringDay < 1 || recurringDay > 31)) {
+        errorDiv.textContent = 'Please enter a valid day of month (1-31) for recurring bills';
+        return;
+      }
+
+      try {
+        const user = auth.currentUser;
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        const householdId = userDoc.data().householdId;
+
+        const transactionData = {
+          householdId: householdId,
+          type: type,
+          amount: parseFloat(amount),
+          category: category,
+          description: description,
+          date: date,
+          isRecurring: isRecurring,
+          status: 'paid',
+          createdBy: user.uid,
+          createdAt: new Date().toISOString()
+        };
+
+        // Add transaction
+        await addDoc(collection(db, 'transactions'), transactionData);
+
+        // If recurring, also create a recurring bill entry
+        if (isRecurring) {
+          await addDoc(collection(db, 'recurringBills'), {
+            householdId: householdId,
+            name: description || category,
+            amount: parseFloat(amount),
+            category: category,
+            dueDay: parseInt(recurringDay),
+            isActive: true,
+            createdBy: user.uid,
+            createdAt: new Date().toISOString()
+          });
+        }
+
+        // Clear form
+        document.getElementById('transaction-amount').value = '';
+        document.getElementById('transaction-category').value = '';
+        document.getElementById('transaction-description').value = '';
+        document.getElementById('transaction-date').valueAsDate = new Date();
+        document.getElementById('transaction-recurring').checked = false;
+        document.getElementById('recurring-options').classList.add('hidden');
+        document.getElementById('recurring-day').value = '';
+
+        // Reload transactions
+        await loadTransactions(householdId);
+
+      } catch (error) {
+        errorDiv.textContent = 'Error adding transaction: ' + error.message;
+        console.error('Error:', error);
+      }
+    });
+
+    // Helper function to generate invite code
+    function generateInviteCode() {
+      return Math.random().toString(36).substring(2, 8).toUpperCase();
+    }
+
+    // Helper function to check if user has a household
+    async function getUserHousehold(userId) {
+      const userDoc = await getDoc(doc(db, 'users', userId));
+      if (userDoc.exists() && userDoc.data().householdId) {
+        return userDoc.data().householdId;
+      }
+      return null;
+    }
+
+    // Helper function to load household data
+    async function loadHouseholdData(householdId) {
+      const householdDoc = await getDoc(doc(db, 'households', householdId));
+      if (householdDoc.exists()) {
+        return householdDoc.data();
+      }
+      return null;
+    }
+
+    // Create Household
+    document.getElementById('submit-create-household').addEventListener('click', async () => {
+      const householdName = document.getElementById('household-name').value.trim();
+      const errorDiv = document.getElementById('create-household-error');
+      errorDiv.textContent = '';
+
+      if (!householdName) {
+        errorDiv.textContent = 'Please enter a household name';
+        return;
+      }
+
+      try {
+        const user = auth.currentUser;
+        const inviteCode = generateInviteCode();
+        
+        // Create household document
+        const householdRef = await addDoc(collection(db, 'households'), {
+          name: householdName,
+          inviteCode: inviteCode,
+          createdBy: user.uid,
+          createdAt: new Date().toISOString(),
+          members: [user.uid]
+        });
+
+        // Update user document with household ID
+        await setDoc(doc(db, 'users', user.uid), {
+          email: user.email,
+          householdId: householdRef.id,
+          joinedAt: new Date().toISOString()
+        });
+
+        // Clear form and show main app
+        document.getElementById('household-name').value = '';
+        createHouseholdForm.classList.add('hidden');
+        mainApp.classList.remove('hidden');
+        
+        // Display household info
+        document.getElementById('current-household-name').textContent = householdName;
+        document.getElementById('household-invite-code').textContent = inviteCode;
+        
+      } catch (error) {
+        errorDiv.textContent = 'Error creating household: ' + error.message;
+      }
+    });
+
+    // Join Household
+    document.getElementById('submit-join-household').addEventListener('click', async () => {
+      const inviteCode = document.getElementById('invite-code').value.trim().toUpperCase();
+      const errorDiv = document.getElementById('join-household-error');
+      errorDiv.textContent = '';
+
+      if (!inviteCode) {
+        errorDiv.textContent = 'Please enter an invite code';
+        return;
+      }
+
+      try {
+        const user = auth.currentUser;
+        
+        // Find household with this invite code
+        const q = query(collection(db, 'households'), where('inviteCode', '==', inviteCode));
+        const querySnapshot = await getDocs(q);
+        
+        if (querySnapshot.empty) {
+          errorDiv.textContent = 'Invalid invite code';
+          return;
+        }
+
+        // Get the household document
+        const householdDoc = querySnapshot.docs[0];
+        const householdId = householdDoc.id;
+        const householdData = householdDoc.data();
+
+        // Update household to add this user to members
+        const updatedMembers = [...householdData.members, user.uid];
+        await setDoc(doc(db, 'households', householdId), {
+          ...householdData,
+          members: updatedMembers
+        });
+
+        // Update user document with household ID
+        await setDoc(doc(db, 'users', user.uid), {
+          email: user.email,
+          householdId: householdId,
+          joinedAt: new Date().toISOString()
+        });
+
+        // Clear form and show main app
+        document.getElementById('invite-code').value = '';
+        joinHouseholdForm.classList.add('hidden');
+        mainApp.classList.remove('hidden');
+        
+        // Display household info
+        document.getElementById('current-household-name').textContent = householdData.name;
+        document.getElementById('household-invite-code').textContent = householdData.inviteCode;
+        
+      } catch (error) {
+        errorDiv.textContent = 'Error joining household: ' + error.message;
+      }
+    });
+
+    // Sign Up
+    document.getElementById('signup-btn').addEventListener('click', () => {
+      const email = document.getElementById('signup-email').value;
+      const password = document.getElementById('signup-password').value;
+      signupError.textContent = '';
+
+      if (!email || !password) {
+        signupError.textContent = 'Please fill in all fields';
+        return;
+      }
+
+      if (password.length < 6) {
+        signupError.textContent = 'Password must be at least 6 characters';
+        return;
+      }
+
+      createUserWithEmailAndPassword(auth, email, password)
+        .then((userCredential) => {
+          console.log('User created:', userCredential.user);
+          // Clear form
+          document.getElementById('signup-email').value = '';
+          document.getElementById('signup-password').value = '';
+        })
+        .catch((error) => {
+          signupError.textContent = error.message;
+        });
+    });
+
+    // Login
+    document.getElementById('login-btn').addEventListener('click', () => {
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-password').value;
+      loginError.textContent = '';
+
+      if (!email || !password) {
+        loginError.textContent = 'Please fill in all fields';
+        return;
+      }
+
+      signInWithEmailAndPassword(auth, email, password)
+        .then((userCredential) => {
+          console.log('Logged in:', userCredential.user);
+          // Clear form
+          document.getElementById('login-email').value = '';
+          document.getElementById('login-password').value = '';
+        })
+        .catch((error) => {
+          loginError.textContent = error.message;
+        });
+    });
+
+    // Logout
+    document.getElementById('logout-btn').addEventListener('click', () => {
+      signOut(auth)
+        .then(() => {
+          console.log('Logged out');
+        })
+        .catch((error) => {
+          console.error('Logout error:', error);
+        });
+    });
+
+    document.getElementById('logout-btn-main').addEventListener('click', () => {
+      signOut(auth)
+        .then(() => {
+          console.log('Logged out');
+        })
+        .catch((error) => {
+          console.error('Logout error:', error);
+        });
+    });
+
+    // Listen for auth state changes
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        // User is signed in - check if they have a household
+        const householdId = await getUserHousehold(user.uid);
+        
+        if (householdId) {
+          // User has a household - load main app
+          const householdData = await loadHouseholdData(householdId);
+          
+          signupForm.classList.add('hidden');
+          loginForm.classList.add('hidden');
+          userInfo.classList.add('hidden');
+          householdSetup.classList.add('hidden');
+          createHouseholdForm.classList.add('hidden');
+          joinHouseholdForm.classList.add('hidden');
+          mainApp.classList.remove('hidden');
+          
+          // Display household info
+          if (householdData) {
+            document.getElementById('current-household-name').textContent = householdData.name;
+            document.getElementById('household-invite-code').textContent = householdData.inviteCode;
+          }
+          
+          // Load transactions
+          await loadTransactions(householdId);
+        } else {
+          // User doesn't have a household - show setup
+          signupForm.classList.add('hidden');
+          loginForm.classList.add('hidden');
+          userInfo.classList.add('hidden');
+          householdSetup.classList.remove('hidden');
+          createHouseholdForm.classList.add('hidden');
+          joinHouseholdForm.classList.add('hidden');
+          mainApp.classList.add('hidden');
+        }
+        
+        console.log('User authenticated:', user.uid);
+      } else {
+        // User is signed out
+        signupForm.classList.remove('hidden');
+        loginForm.classList.add('hidden');
+        userInfo.classList.add('hidden');
+        householdSetup.classList.add('hidden');
+        createHouseholdForm.classList.add('hidden');
+        joinHouseholdForm.classList.add('hidden');
+        mainApp.classList.add('hidden');
+      }
+    });
+  </script>
+
+</body>
+</html>
