@@ -1,0 +1,1450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ballin on a Budget</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 400px;
+      margin: 50px auto;
+      padding: 20px;
+    }
+    .form-container {
+      background: #f5f5f5;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    .form-container h2 {
+      text-align: center;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    .toggle-link {
+      text-align: center;
+      margin-top: 10px;
+      color: #007bff;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+    .error {
+      color: red;
+      font-size: 14px;
+      margin-top: 10px;
+    }
+    #user-info {
+      text-align: center;
+    }
+    #logout-btn {
+      background: #dc3545;
+      margin-top: 20px;
+    }
+    #logout-btn:hover {
+      background: #c82333;
+    }
+    .hidden {
+      display: none;
+    }
+    .transaction-item {
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 12px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .transaction-item.income {
+      border-left: 4px solid #28a745;
+    }
+    .transaction-item.expense {
+      border-left: 4px solid #dc3545;
+    }
+    .transaction-amount {
+      font-size: 18px;
+      font-weight: bold;
+    }
+    .transaction-amount.income {
+      color: #28a745;
+    }
+    .transaction-amount.expense {
+      color: #dc3545;
+    }
+    .transaction-details {
+      flex: 1;
+    }
+    .transaction-category {
+      font-size: 12px;
+      color: #666;
+      text-transform: capitalize;
+    }
+    .transaction-date {
+      font-size: 12px;
+      color: #999;
+    }
+    .category-bar {
+      margin: 10px 0;
+    }
+    .category-bar-label {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 5px;
+      font-size: 14px;
+    }
+    .category-bar-fill {
+      background: #e0e0e0;
+      border-radius: 4px;
+      height: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    .category-bar-fill-inner {
+      background: #dc3545;
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #f0f0f0;
+      transition: background 0.2s;
+    }
+    .legend-item:hover {
+      background: #f9f9f9;
+    }
+    .legend-item:last-child {
+      border-bottom: none;
+    }
+    .legend-color {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      margin-right: 10px;
+      flex-shrink: 0;
+    }
+    .legend-label {
+      flex: 1;
+      text-transform: capitalize;
+    }
+    .legend-amount {
+      font-weight: bold;
+      margin-left: 10px;
+    }
+    .legend-percentage {
+      color: #666;
+      font-size: 14px;
+      margin-left: 5px;
+    }
+    .bill-item {
+      background: #f9f9f9;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      padding: 12px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .bill-item.due-soon {
+      border-left: 4px solid #FF9F40;
+    }
+    .bill-item.overdue {
+      border-left: 4px solid #dc3545;
+    }
+    .bill-name {
+      font-weight: bold;
+      margin-bottom: 3px;
+    }
+    .bill-info {
+      font-size: 12px;
+      color: #666;
+    }
+    .bill-amount {
+      font-size: 18px;
+      font-weight: bold;
+      color: #dc3545;
+    }
+    .bill-due {
+      font-size: 12px;
+      color: #999;
+      margin-top: 3px;
+    }
+    .delete-btn {
+      background: #dc3545;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      margin-left: 10px;
+    }
+    .delete-btn:hover {
+      background: #c82333;
+    }
+  </style>
+</head>
+<body>
+
+  <header style="text-align: center; margin-bottom: 30px;">
+    <h1 style="color: #007bff; margin-bottom: 5px;">Ballin on a Budget</h1>
+    <p style="color: #666; font-size: 14px;">Spend smart, live large</p>
+  </header>
+
+  <!-- Sign Up Form -->
+  <div id="signup-form" class="form-container">
+    <h2>Sign Up</h2>
+    <input type="email" id="signup-email" placeholder="Email" required>
+    <input type="password" id="signup-password" placeholder="Password (min 6 characters)" required>
+    <button id="signup-btn">Sign Up</button>
+    <div id="signup-error" class="error"></div>
+    <div class="toggle-link" id="show-login">Already have an account? Login</div>
+  </div>
+
+  <!-- Login Form -->
+  <div id="login-form" class="form-container hidden">
+    <h2>Login</h2>
+    <input type="email" id="login-email" placeholder="Email" required>
+    <input type="password" id="login-password" placeholder="Password" required>
+    <button id="login-btn">Login</button>
+    <div id="login-error" class="error"></div>
+    <div class="toggle-link" id="show-signup">Don't have an account? Sign Up</div>
+  </div>
+
+  <!-- Logged In State -->
+  <div id="user-info" class="hidden">
+    <h2>Welcome!</h2>
+    <p>You're logged in as: <strong id="user-email"></strong></p>
+    <p>User ID: <span id="user-id"></span></p>
+    <button id="logout-btn">Logout</button>
+  </div>
+
+  <!-- Household Setup -->
+  <div id="household-setup" class="hidden">
+    <div class="form-container">
+      <h2>Set Up Your Household</h2>
+      <p style="text-align: center; color: #666; margin-bottom: 20px;">
+        Create a new household or join an existing one
+      </p>
+      
+      <button id="create-household-btn" style="margin-bottom: 10px;">Create New Household</button>
+      <button id="join-household-btn" style="background: #28a745;">Join Existing Household</button>
+    </div>
+  </div>
+
+  <!-- Create Household Form -->
+  <div id="create-household-form" class="form-container hidden">
+    <h2>Create Household</h2>
+    <input type="text" id="household-name" placeholder="Household Name (e.g., Harris Household)" required>
+    <button id="submit-create-household">Create Household</button>
+    <div id="create-household-error" class="error"></div>
+    <div class="toggle-link" id="back-to-household-setup">Back</div>
+  </div>
+
+  <!-- Join Household Form -->
+  <div id="join-household-form" class="form-container hidden">
+    <h2>Join Household</h2>
+    <input type="text" id="invite-code" placeholder="Enter Invite Code" required>
+    <button id="submit-join-household">Join Household</button>
+    <div id="join-household-error" class="error"></div>
+    <div class="toggle-link" id="back-to-household-setup-2">Back</div>
+  </div>
+
+  <!-- Main App (Budget Dashboard) -->
+  <div id="main-app" class="hidden">
+    <h2>Budget Dashboard</h2>
+    <p>Household: <strong id="current-household-name"></strong></p>
+    <p style="font-size: 12px; color: #666;">Invite Code: <strong id="household-invite-code"></strong></p>
+    
+    <!-- Category Spending Summary -->
+    <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin: 20px 0;">
+      <h3 style="text-align: center; margin-bottom: 15px;">Spending by Category</h3>
+      
+      <!-- Month selector -->
+      <div style="text-align: center; margin-bottom: 15px;">
+        <select id="month-selector" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+        </select>
+      </div>
+      
+      <!-- Bills vs Discretionary Summary -->
+      <div style="background: #f9f9f9; border-radius: 8px; padding: 15px; margin-bottom: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div id="fixed-bills-box" style="text-align: center; padding: 10px; background: white; border-radius: 4px; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='white'">
+          <div style="font-size: 12px; color: #666; margin-bottom: 5px;">Fixed Bills</div>
+          <div id="fixed-bills-amount" style="font-size: 20px; font-weight: bold; color: #dc3545;">$0.00</div>
+        </div>
+        <div id="discretionary-box" style="text-align: center; padding: 10px; background: white; border-radius: 4px; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='white'">
+          <div style="font-size: 12px; color: #666; margin-bottom: 5px;">Discretionary</div>
+          <div id="discretionary-amount" style="font-size: 20px; font-weight: bold; color: #FF9F40;">$0.00</div>
+        </div>
+      </div>
+      
+      <div id="category-summary">
+        <p style="text-align: center; color: #666;">No expenses this month</p>
+      </div>
+      
+      <canvas id="pie-chart" width="300" height="300" style="display: none; margin: 0 auto;"></canvas>
+      
+      <div id="category-legend" style="margin-top: 20px;"></div>
+      
+      <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee;">
+        <div style="display: flex; justify-content: space-between; font-weight: bold;">
+          <span>Total Expenses:</span>
+          <span id="total-expenses" style="color: #dc3545;">$0.00</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-weight: bold; margin-top: 5px;">
+          <span>Total Income:</span>
+          <span id="total-income" style="color: #28a745;">$0.00</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Upcoming Bills -->
+    <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin: 20px 0;">
+      <h3 style="text-align: center; margin-bottom: 15px;">Recurring Bills</h3>
+      
+      <div id="recurring-bills-list">
+        <p style="text-align: center; color: #666;">No recurring bills set up</p>
+      </div>
+      
+      <!-- Add Recurring Bill Form -->
+      <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
+        <h4 style="text-align: center; margin-bottom: 10px;">Add Recurring Bill</h4>
+        <p style="text-align: center; font-size: 12px; color: #666; margin-bottom: 15px;">Set up a bill that auto-creates monthly (won't create a transaction now)</p>
+        
+        <input type="text" id="bill-name" placeholder="Bill Name (e.g., Mortgage)" required>
+        
+        <input type="number" id="bill-amount" placeholder="Amount" step="0.01" required>
+        
+        <select id="bill-category" style="width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px;">
+          <option value="">Select Category</option>
+          <option value="rent">Rent/Mortgage</option>
+          <option value="utilities">Utilities</option>
+          <option value="subscriptions">Subscriptions</option>
+          <option value="insurance">Insurance</option>
+          <option value="transportation">Transportation</option>
+          <option value="other">Other</option>
+          <option value="custom">➕ Add Custom Category</option>
+        </select>
+        
+        <div id="custom-bill-category-input" class="hidden" style="margin: 10px 0;">
+          <input type="text" id="custom-bill-category-name" placeholder="Enter custom category name" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+        
+        <input type="number" id="bill-due-day" min="1" max="31" placeholder="Day of month (1-31)" required>
+        
+        <button id="add-bill-btn">Add Recurring Bill</button>
+        <div id="bill-error" class="error"></div>
+      </div>
+    </div>
+    
+    <!-- Add Transaction Form -->
+    <div class="form-container" style="margin-top: 20px;">
+      <h3 style="text-align: center;">Add Transaction</h3>
+      
+      <select id="transaction-type" style="width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px;">
+        <option value="expense">Expense</option>
+        <option value="income">Income</option>
+      </select>
+      
+      <input type="number" id="transaction-amount" placeholder="Amount" step="0.01" required>
+      
+      <select id="transaction-category" style="width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px;">
+        <option value="">Select Category</option>
+        <optgroup label="Common Expenses">
+          <option value="groceries">Groceries</option>
+          <option value="dining">Dining Out</option>
+          <option value="utilities">Utilities</option>
+          <option value="rent">Rent/Mortgage</option>
+          <option value="transportation">Transportation</option>
+          <option value="entertainment">Entertainment</option>
+          <option value="healthcare">Healthcare</option>
+          <option value="shopping">Shopping</option>
+          <option value="subscriptions">Subscriptions</option>
+        </optgroup>
+        <optgroup label="Income">
+          <option value="salary">Salary</option>
+          <option value="freelance">Freelance</option>
+          <option value="other-income">Other Income</option>
+        </optgroup>
+        <optgroup label="Other">
+          <option value="other">Other</option>
+          <option value="custom">➕ Add Custom Category</option>
+        </optgroup>
+      </select>
+      
+      <div id="custom-category-input" class="hidden" style="margin: 10px 0;">
+        <input type="text" id="custom-category-name" placeholder="Enter custom category name" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+      </div>
+      
+      <input type="text" id="transaction-description" placeholder="Description (optional)">
+      
+      <input type="date" id="transaction-date" required>
+      
+      <button id="add-transaction-btn">Add Transaction</button>
+      <div id="transaction-error" class="error"></div>
+    </div>
+    
+    <!-- Transactions List -->
+    <div style="margin-top: 30px;">
+      <h3 style="text-align: center;">Recent Transactions</h3>
+      
+      <!-- Category filter info -->
+      <div id="category-filter-info" class="hidden" style="text-align: center; margin: 10px 0; padding: 10px; background: #f0f0f0; border-radius: 4px;">
+        <span>Filtering by: <strong id="filtered-category"></strong></span>
+        <button id="clear-filter-btn" style="margin-left: 10px; padding: 5px 15px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">Clear Filter</button>
+      </div>
+      
+      <div id="transactions-list" style="margin-top: 15px;">
+        <p style="text-align: center; color: #666;">No transactions yet</p>
+      </div>
+    </div>
+    
+    <button id="logout-btn-main" style="margin-top: 20px;">Logout</button>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, collection, addDoc, query, where, getDocs, orderBy, limit, deleteDoc } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBbyOgSbmwxhqYaoPih0v_PpKQK208u0zU",
+      authDomain: "harris-house-ef670.firebaseapp.com",
+      projectId: "harris-house-ef670",
+      storageBucket: "harris-house-ef670.firebasestorage.app",
+      messagingSenderId: "398594469140",
+      appId: "1:398594469140:web:1bf73a98029f5800b06601",
+      measurementId: "G-YWP5748HE8"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // Global filter state
+    let currentCategoryFilter = null;
+    let currentTypeFilter = null;
+
+    // DOM elements
+    const signupForm = document.getElementById('signup-form');
+    const loginForm = document.getElementById('login-form');
+    const userInfo = document.getElementById('user-info');
+    const signupError = document.getElementById('signup-error');
+    const loginError = document.getElementById('login-error');
+    const householdSetup = document.getElementById('household-setup');
+    const createHouseholdForm = document.getElementById('create-household-form');
+    const joinHouseholdForm = document.getElementById('join-household-form');
+    const mainApp = document.getElementById('main-app');
+
+    // Toggle between signup and login
+    document.getElementById('show-login').addEventListener('click', () => {
+      signupForm.classList.add('hidden');
+      loginForm.classList.remove('hidden');
+      signupError.textContent = '';
+    });
+
+    document.getElementById('show-signup').addEventListener('click', () => {
+      loginForm.classList.add('hidden');
+      signupForm.classList.remove('hidden');
+      loginError.textContent = '';
+    });
+
+    // Household setup navigation
+    document.getElementById('create-household-btn').addEventListener('click', () => {
+      householdSetup.classList.add('hidden');
+      createHouseholdForm.classList.remove('hidden');
+    });
+
+    document.getElementById('join-household-btn').addEventListener('click', () => {
+      householdSetup.classList.add('hidden');
+      joinHouseholdForm.classList.remove('hidden');
+    });
+
+    document.getElementById('back-to-household-setup').addEventListener('click', () => {
+      createHouseholdForm.classList.add('hidden');
+      householdSetup.classList.remove('hidden');
+      document.getElementById('create-household-error').textContent = '';
+    });
+
+    document.getElementById('back-to-household-setup-2').addEventListener('click', () => {
+      joinHouseholdForm.classList.add('hidden');
+      householdSetup.classList.remove('hidden');
+      document.getElementById('join-household-error').textContent = '';
+    });
+
+    // Set today's date as default
+    document.getElementById('transaction-date').valueAsDate = new Date();
+
+    // Show custom category input when "Add Custom Category" is selected
+    document.getElementById('transaction-category').addEventListener('change', (e) => {
+      const customInput = document.getElementById('custom-category-input');
+      if (e.target.value === 'custom') {
+        customInput.classList.remove('hidden');
+        document.getElementById('custom-category-name').focus();
+      } else {
+        customInput.classList.add('hidden');
+      }
+    });
+
+    document.getElementById('bill-category').addEventListener('change', (e) => {
+      const customInput = document.getElementById('custom-bill-category-input');
+      if (e.target.value === 'custom') {
+        customInput.classList.remove('hidden');
+        document.getElementById('custom-bill-category-name').focus();
+      } else {
+        customInput.classList.add('hidden');
+      }
+    });
+
+    // Clear category filter
+    document.getElementById('clear-filter-btn').addEventListener('click', async () => {
+      currentCategoryFilter = null;
+      currentTypeFilter = null;
+      const user = auth.currentUser;
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      const householdId = userDoc.data().householdId;
+      await loadTransactions(householdId, null, null);
+    });
+
+    // Click handler for Fixed Bills box
+    document.getElementById('fixed-bills-box').addEventListener('click', async () => {
+      currentCategoryFilter = null;
+      currentTypeFilter = 'bills';
+      const user = auth.currentUser;
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      const householdId = userDoc.data().householdId;
+      await loadTransactions(householdId, null, 'bills');
+      document.getElementById('transactions-list').scrollIntoView({ behavior: 'smooth' });
+    });
+
+    // Click handler for Discretionary box
+    document.getElementById('discretionary-box').addEventListener('click', async () => {
+      currentCategoryFilter = null;
+      currentTypeFilter = 'discretionary';
+      const user = auth.currentUser;
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      const householdId = userDoc.data().householdId;
+      await loadTransactions(householdId, null, 'discretionary');
+      document.getElementById('transactions-list').scrollIntoView({ behavior: 'smooth' });
+    });
+
+    // Populate month selector with last 12 months
+    function populateMonthSelector() {
+      const selector = document.getElementById('month-selector');
+      const today = new Date();
+      
+      for (let i = 0; i < 12; i++) {
+        const date = new Date(today.getFullYear(), today.getMonth() - i, 1);
+        const year = date.getFullYear();
+        const month = date.getMonth();
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
+                           'July', 'August', 'September', 'October', 'November', 'December'];
+        
+        const option = document.createElement('option');
+        option.value = `${year}-${String(month + 1).padStart(2, '0')}`;
+        option.textContent = `${monthNames[month]} ${year}`;
+        if (i === 0) option.selected = true;
+        
+        selector.appendChild(option);
+      }
+    }
+    
+    // Call on load
+    populateMonthSelector();
+
+    // Color palette for pie chart
+    const categoryColors = [
+      '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
+      '#FF9F40', '#FF6384', '#C9CBCF', '#4BC0C0', '#FF6384'
+    ];
+
+    // Function to draw pie chart
+    function drawPieChart(categoryTotals, totalExpenses) {
+      const canvas = document.getElementById('pie-chart');
+      const ctx = canvas.getContext('2d');
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      const radius = 120;
+      
+      // Clear canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // Calculate angles
+      let currentAngle = -Math.PI / 2; // Start at top
+      
+      const sortedCategories = Object.entries(categoryTotals)
+        .sort((a, b) => b[1] - a[1]);
+      
+      // Draw slices
+      sortedCategories.forEach(([category, amount], index) => {
+        const sliceAngle = (amount / totalExpenses) * 2 * Math.PI;
+        
+        // Draw slice
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius, currentAngle, currentAngle + sliceAngle);
+        ctx.lineTo(centerX, centerY);
+        ctx.fillStyle = categoryColors[index % categoryColors.length];
+        ctx.fill();
+        
+        // Draw border
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        currentAngle += sliceAngle;
+      });
+      
+      // Draw legend
+      const legendDiv = document.getElementById('category-legend');
+      legendDiv.innerHTML = '';
+      
+      sortedCategories.forEach(([category, amount], index) => {
+        const percentage = ((amount / totalExpenses) * 100).toFixed(1);
+        
+        const legendItem = document.createElement('div');
+        legendItem.className = 'legend-item';
+        legendItem.style.cursor = 'pointer';
+        legendItem.dataset.category = category;
+        legendItem.innerHTML = `
+          <div style="display: flex; align-items: center;">
+            <div class="legend-color" style="background-color: ${categoryColors[index % categoryColors.length]};"></div>
+            <span class="legend-label">${category}</span>
+          </div>
+          <div>
+            <span class="legend-amount" style="color: #dc3545;">$${amount.toFixed(2)}</span>
+            <span class="legend-percentage">(${percentage}%)</span>
+          </div>
+        `;
+        
+        // Add click handler to filter transactions
+        legendItem.addEventListener('click', async () => {
+          currentCategoryFilter = category;
+          currentTypeFilter = null; // Clear type filter when filtering by category
+          const user = auth.currentUser;
+          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          const householdId = userDoc.data().householdId;
+          await loadTransactions(householdId, category, null);
+          
+          // Scroll to transactions
+          document.getElementById('transactions-list').scrollIntoView({ behavior: 'smooth' });
+        });
+        
+        legendDiv.appendChild(legendItem);
+      });
+      
+      // Show canvas, hide no data message
+      canvas.style.display = 'block';
+      document.getElementById('category-summary').style.display = 'none';
+    }
+
+    // Function to calculate category spending for a given month
+    async function loadCategorySpending(householdId, yearMonth) {
+      try {
+        // Get all transactions for the household
+        const q = query(
+          collection(db, 'transactions'),
+          where('householdId', '==', householdId)
+        );
+        
+        const querySnapshot = await getDocs(q);
+        
+        // Filter by selected month and calculate totals
+        const categoryTotals = {};
+        let totalExpenses = 0;
+        let totalIncome = 0;
+        let fixedBills = 0;
+        let discretionary = 0;
+        
+        querySnapshot.forEach((doc) => {
+          const transaction = doc.data();
+          const transactionMonth = transaction.date.substring(0, 7); // Get YYYY-MM
+          
+          if (transactionMonth === yearMonth) {
+            if (transaction.type === 'expense') {
+              if (!categoryTotals[transaction.category]) {
+                categoryTotals[transaction.category] = 0;
+              }
+              categoryTotals[transaction.category] += transaction.amount;
+              totalExpenses += transaction.amount;
+              
+              // Check if it's a recurring bill (fixed) or discretionary
+              if (transaction.isRecurring || transaction.recurringBillId) {
+                fixedBills += transaction.amount;
+              } else {
+                discretionary += transaction.amount;
+              }
+            } else if (transaction.type === 'income') {
+              totalIncome += transaction.amount;
+            }
+          }
+        });
+        
+        // Update bills vs discretionary display
+        document.getElementById('fixed-bills-amount').textContent = `$${fixedBills.toFixed(2)}`;
+        document.getElementById('discretionary-amount').textContent = `$${discretionary.toFixed(2)}`;
+        
+        // Display category breakdown
+        if (Object.keys(categoryTotals).length === 0) {
+          document.getElementById('pie-chart').style.display = 'none';
+          document.getElementById('category-summary').style.display = 'block';
+          document.getElementById('category-summary').innerHTML = '<p style="text-align: center; color: #666;">No expenses this month</p>';
+          document.getElementById('category-legend').innerHTML = '';
+        } else {
+          drawPieChart(categoryTotals, totalExpenses);
+        }
+        
+        // Update totals
+        document.getElementById('total-expenses').textContent = `$${totalExpenses.toFixed(2)}`;
+        document.getElementById('total-income').textContent = `$${totalIncome.toFixed(2)}`;
+        
+      } catch (error) {
+        console.error('Error loading category spending:', error);
+      }
+    }
+    
+    // Month selector change handler
+    document.getElementById('month-selector').addEventListener('change', async (e) => {
+      const user = auth.currentUser;
+      if (user) {
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        const householdId = userDoc.data().householdId;
+        await loadCategorySpending(householdId, e.target.value);
+      }
+    });
+
+    // Function to load recurring bills
+    async function loadRecurringBills(householdId) {
+      try {
+        const q = query(
+          collection(db, 'recurringBills'),
+          where('householdId', '==', householdId),
+          where('isActive', '==', true)
+        );
+        
+        const querySnapshot = await getDocs(q);
+        const billsList = document.getElementById('recurring-bills-list');
+        
+        if (querySnapshot.empty) {
+          billsList.innerHTML = '<p style="text-align: center; color: #666;">No recurring bills set up</p>';
+          return;
+        }
+        
+        billsList.innerHTML = '';
+        
+        // Get current date info
+        const today = new Date();
+        const currentDay = today.getDate();
+        const currentMonth = today.getMonth();
+        const currentYear = today.getFullYear();
+        
+        const bills = [];
+        querySnapshot.forEach((doc) => {
+          bills.push({ id: doc.id, ...doc.data() });
+        });
+        
+        // Sort by due day
+        bills.sort((a, b) => a.dueDay - b.dueDay);
+        
+        bills.forEach((bill) => {
+          const billDiv = document.createElement('div');
+          
+          // Calculate next due date
+          let nextDueDate = new Date(currentYear, currentMonth, bill.dueDay);
+          if (bill.dueDay < currentDay) {
+            // If day has passed this month, show next month
+            nextDueDate = new Date(currentYear, currentMonth + 1, bill.dueDay);
+          }
+          
+          // Check if due soon (within 7 days)
+          const daysUntilDue = Math.ceil((nextDueDate - today) / (1000 * 60 * 60 * 24));
+          const dueSoon = daysUntilDue <= 7 && daysUntilDue >= 0;
+          const overdue = daysUntilDue < 0;
+          
+          let statusClass = '';
+          let statusText = '';
+          
+          if (overdue) {
+            statusClass = 'overdue';
+            statusText = 'Overdue';
+          } else if (dueSoon) {
+            statusClass = 'due-soon';
+            statusText = `Due in ${daysUntilDue} day${daysUntilDue !== 1 ? 's' : ''}`;
+          } else {
+            statusText = `Due on ${bill.dueDay}${getDaySuffix(bill.dueDay)}`;
+          }
+          
+          billDiv.className = `bill-item ${statusClass}`;
+          billDiv.innerHTML = `
+            <div>
+              <div class="bill-name">${bill.name}</div>
+              <div class="bill-info" style="text-transform: capitalize;">${bill.category}</div>
+              <div class="bill-due">${statusText}</div>
+            </div>
+            <div style="display: flex; align-items: center;">
+              <div class="bill-amount">$${bill.amount.toFixed(2)}</div>
+              <button class="delete-btn delete-bill-btn" data-bill-id="${bill.id}">Delete</button>
+            </div>
+          `;
+          
+          billsList.appendChild(billDiv);
+        });
+        
+        // Add delete button event listeners for bills
+        document.querySelectorAll('.delete-bill-btn').forEach(btn => {
+          btn.addEventListener('click', async (e) => {
+            const billId = e.target.getAttribute('data-bill-id');
+            if (confirm('Are you sure you want to delete this recurring bill? This will not delete existing transactions.')) {
+              try {
+                await deleteDoc(doc(db, 'recurringBills', billId));
+                // Reload recurring bills
+                await loadRecurringBills(householdId);
+              } catch (error) {
+                console.error('Error deleting recurring bill:', error);
+                alert('Failed to delete recurring bill');
+              }
+            }
+          });
+        });
+        
+      } catch (error) {
+        console.error('Error loading recurring bills:', error);
+      }
+    }
+    
+    // Helper function to get day suffix (1st, 2nd, 3rd, etc.)
+    function getDaySuffix(day) {
+      if (day >= 11 && day <= 13) return 'th';
+      switch (day % 10) {
+        case 1: return 'st';
+        case 2: return 'nd';
+        case 3: return 'rd';
+        default: return 'th';
+      }
+    }
+
+    // Function to auto-create recurring bill transactions for current month
+    async function autoCreateRecurringBills(householdId) {
+      try {
+        const today = new Date();
+        const currentYear = today.getFullYear();
+        const currentMonth = today.getMonth();
+        const currentMonthStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
+        
+        // Get all active recurring bills
+        const billsQuery = query(
+          collection(db, 'recurringBills'),
+          where('householdId', '==', householdId),
+          where('isActive', '==', true)
+        );
+        
+        const billsSnapshot = await getDocs(billsQuery);
+        
+        if (billsSnapshot.empty) {
+          return;
+        }
+        
+        // Get all transactions for current month to check what's been created
+        const transactionsQuery = query(
+          collection(db, 'transactions'),
+          where('householdId', '==', householdId)
+        );
+        
+        const transactionsSnapshot = await getDocs(transactionsQuery);
+        const existingTransactions = new Map(); // Map of billId -> transaction
+        
+        transactionsSnapshot.forEach((doc) => {
+          const transaction = doc.data();
+          const transactionDate = transaction.date;
+          
+          // Check if transaction is in current month
+          if (transactionDate && transactionDate.startsWith(currentMonthStr)) {
+            // Check by recurringBillId if available
+            if (transaction.recurringBillId) {
+              existingTransactions.set(transaction.recurringBillId, true);
+            }
+            // Also create a key based on name+amount+date to catch duplicates
+            const key = `${transaction.description}_${transaction.amount}_${transactionDate}`;
+            existingTransactions.set(key, true);
+          }
+        });
+        
+        // Create transactions for bills that don't have one yet this month
+        const promises = [];
+        billsSnapshot.forEach((doc) => {
+          const bill = doc.data();
+          const billId = doc.id;
+          const transactionDate = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(bill.dueDay).padStart(2, '0')}`;
+          const duplicateKey = `${bill.name}_${bill.amount}_${transactionDate}`;
+          
+          // Check if transaction already exists (by ID or by name+amount+date)
+          if (!existingTransactions.has(billId) && !existingTransactions.has(duplicateKey)) {
+            // Create transaction for this bill
+            const transactionData = {
+              householdId: householdId,
+              type: 'expense',
+              amount: bill.amount,
+              category: bill.category,
+              description: bill.name,
+              date: transactionDate,
+              isRecurring: true,
+              recurringBillId: billId,
+              status: 'pending',
+              createdAt: new Date().toISOString(),
+              autoCreated: true
+            };
+            
+            promises.push(addDoc(collection(db, 'transactions'), transactionData));
+          }
+        });
+        
+        if (promises.length > 0) {
+          await Promise.all(promises);
+          console.log(`Auto-created ${promises.length} recurring bill transactions`);
+        }
+        
+      } catch (error) {
+        console.error('Error auto-creating recurring bills:', error);
+      }
+    }
+
+    // Function to load transactions for the household
+    async function loadTransactions(householdId, filterCategory = null, filterType = null) {
+      try {
+        // Try with orderBy first
+        let q = query(
+          collection(db, 'transactions'),
+          where('householdId', '==', householdId),
+          orderBy('date', 'desc'),
+          limit(100) // Increased to show more when filtering
+        );
+        
+        let querySnapshot;
+        try {
+          querySnapshot = await getDocs(q);
+        } catch (indexError) {
+          // If index doesn't exist, query without orderBy
+          console.log('Index not found, querying without orderBy');
+          q = query(
+            collection(db, 'transactions'),
+            where('householdId', '==', householdId),
+            limit(100)
+          );
+          querySnapshot = await getDocs(q);
+        }
+        
+        const transactionsList = document.getElementById('transactions-list');
+        
+        if (querySnapshot.empty) {
+          transactionsList.innerHTML = '<p style="text-align: center; color: #666;">No transactions yet</p>';
+          return;
+        }
+        
+        transactionsList.innerHTML = '';
+        
+        // Convert to array and sort by date
+        const transactions = [];
+        querySnapshot.forEach((doc) => {
+          transactions.push({ id: doc.id, ...doc.data() });
+        });
+        
+        // Filter by category or type if specified
+        let filteredTransactions = transactions;
+        
+        if (filterType === 'bills') {
+          // Show only recurring/auto-created bills
+          filteredTransactions = transactions.filter(t => t.isRecurring || t.recurringBillId);
+          document.getElementById('category-filter-info').classList.remove('hidden');
+          document.getElementById('filtered-category').textContent = 'Fixed Bills';
+        } else if (filterType === 'discretionary') {
+          // Show only non-recurring transactions
+          filteredTransactions = transactions.filter(t => !t.isRecurring && !t.recurringBillId);
+          document.getElementById('category-filter-info').classList.remove('hidden');
+          document.getElementById('filtered-category').textContent = 'Discretionary Spending';
+        } else if (filterCategory) {
+          // Filter by category
+          filteredTransactions = transactions.filter(t => t.category === filterCategory);
+          document.getElementById('category-filter-info').classList.remove('hidden');
+          document.getElementById('filtered-category').textContent = filterCategory;
+        } else {
+          document.getElementById('category-filter-info').classList.add('hidden');
+        }
+        
+        // Sort by date descending
+        filteredTransactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+        
+        // Show only first 20 unless filtering
+        const displayTransactions = (filterCategory || filterType) ? filteredTransactions : filteredTransactions.slice(0, 20);
+        
+        if (displayTransactions.length === 0) {
+          transactionsList.innerHTML = '<p style="text-align: center; color: #666;">No transactions match this filter</p>';
+          return;
+        }
+        
+        displayTransactions.forEach((transaction) => {
+          const transactionDiv = document.createElement('div');
+          transactionDiv.className = `transaction-item ${transaction.type}`;
+          
+          const amount = transaction.type === 'income' ? '+' : '-';
+          const formattedAmount = `${amount}$${parseFloat(transaction.amount).toFixed(2)}`;
+          
+          const statusBadge = transaction.status === 'pending' ? 
+            '<span style="background: #FF9F40; color: white; padding: 2px 8px; border-radius: 3px; font-size: 11px; margin-left: 5px;">PENDING</span>' : '';
+          
+          transactionDiv.innerHTML = `
+            <div class="transaction-details">
+              <div style="font-weight: bold;">${transaction.description || transaction.category}${statusBadge}</div>
+              <div class="transaction-category">${transaction.category}${transaction.isRecurring ? ' • Recurring' : ''}</div>
+              <div class="transaction-date">${transaction.date}</div>
+            </div>
+            <div style="display: flex; align-items: center;">
+              <div class="transaction-amount ${transaction.type}">${formattedAmount}</div>
+              <button class="delete-btn" data-transaction-id="${transaction.id}">Delete</button>
+            </div>
+          `;
+          
+          transactionsList.appendChild(transactionDiv);
+        });
+        
+        // Add delete button event listeners
+        document.querySelectorAll('.delete-btn').forEach(btn => {
+          btn.addEventListener('click', async (e) => {
+            const transactionId = e.target.getAttribute('data-transaction-id');
+            if (confirm('Are you sure you want to delete this transaction?')) {
+              try {
+                await deleteDoc(doc(db, 'transactions', transactionId));
+                // Reload data
+                await loadTransactions(householdId, currentCategoryFilter, currentTypeFilter);
+                const selectedMonth = document.getElementById('month-selector').value;
+                await loadCategorySpending(householdId, selectedMonth);
+              } catch (error) {
+                console.error('Error deleting transaction:', error);
+                alert('Failed to delete transaction');
+              }
+            }
+          });
+        });
+      } catch (error) {
+        console.error('Error loading transactions:', error);
+        document.getElementById('transactions-list').innerHTML = '<p style="text-align: center; color: #666;">No transactions yet</p>';
+      }
+    }
+
+    // Add Transaction
+    document.getElementById('add-transaction-btn').addEventListener('click', async () => {
+      const type = document.getElementById('transaction-type').value;
+      const amount = document.getElementById('transaction-amount').value;
+      let category = document.getElementById('transaction-category').value;
+      const description = document.getElementById('transaction-description').value;
+      const date = document.getElementById('transaction-date').value;
+      const errorDiv = document.getElementById('transaction-error');
+      errorDiv.textContent = '';
+
+      // Check if custom category was selected
+      if (category === 'custom') {
+        const customCategory = document.getElementById('custom-category-name').value.trim();
+        if (!customCategory) {
+          errorDiv.textContent = 'Please enter a custom category name';
+          return;
+        }
+        category = customCategory.toLowerCase();
+      }
+
+      // Validation
+      if (!amount || !category || !date) {
+        errorDiv.textContent = 'Please fill in all required fields';
+        return;
+      }
+
+      if (parseFloat(amount) <= 0) {
+        errorDiv.textContent = 'Amount must be greater than 0';
+        return;
+      }
+
+      try {
+        const user = auth.currentUser;
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        const householdId = userDoc.data().householdId;
+
+        const transactionData = {
+          householdId: householdId,
+          type: type,
+          amount: parseFloat(amount),
+          category: category,
+          description: description,
+          date: date,
+          isRecurring: false,
+          status: 'paid',
+          createdBy: user.uid,
+          createdAt: new Date().toISOString()
+        };
+
+        // Add transaction
+        await addDoc(collection(db, 'transactions'), transactionData);
+
+        // Clear form
+        document.getElementById('transaction-amount').value = '';
+        document.getElementById('transaction-category').value = '';
+        document.getElementById('transaction-description').value = '';
+        document.getElementById('transaction-date').valueAsDate = new Date();
+        document.getElementById('custom-category-input').classList.add('hidden');
+        document.getElementById('custom-category-name').value = '';
+
+        // Reload transactions and category spending
+        await loadTransactions(householdId);
+        const selectedMonth = document.getElementById('month-selector').value;
+        await loadCategorySpending(householdId, selectedMonth);
+
+      } catch (error) {
+        errorDiv.textContent = 'Error adding transaction: ' + error.message;
+        console.error('Error:', error);
+      }
+    });
+
+    // Add Recurring Bill (without creating a transaction)
+    document.getElementById('add-bill-btn').addEventListener('click', async () => {
+      const name = document.getElementById('bill-name').value.trim();
+      const amount = document.getElementById('bill-amount').value;
+      let category = document.getElementById('bill-category').value;
+      const dueDay = document.getElementById('bill-due-day').value;
+      const errorDiv = document.getElementById('bill-error');
+      errorDiv.textContent = '';
+
+      // Check if custom category was selected
+      if (category === 'custom') {
+        const customCategory = document.getElementById('custom-bill-category-name').value.trim();
+        if (!customCategory) {
+          errorDiv.textContent = 'Please enter a custom category name';
+          return;
+        }
+        category = customCategory.toLowerCase();
+      }
+
+      // Validation
+      if (!name || !amount || !category || !dueDay) {
+        errorDiv.textContent = 'Please fill in all fields';
+        return;
+      }
+
+      if (parseFloat(amount) <= 0) {
+        errorDiv.textContent = 'Amount must be greater than 0';
+        return;
+      }
+
+      if (parseInt(dueDay) < 1 || parseInt(dueDay) > 31) {
+        errorDiv.textContent = 'Day must be between 1 and 31';
+        return;
+      }
+
+      try {
+        const user = auth.currentUser;
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        const householdId = userDoc.data().householdId;
+
+        await addDoc(collection(db, 'recurringBills'), {
+          householdId: householdId,
+          name: name,
+          amount: parseFloat(amount),
+          category: category,
+          dueDay: parseInt(dueDay),
+          isActive: true,
+          createdBy: user.uid,
+          createdAt: new Date().toISOString()
+        });
+
+        // Clear form
+        document.getElementById('bill-name').value = '';
+        document.getElementById('bill-amount').value = '';
+        document.getElementById('bill-category').value = '';
+        document.getElementById('bill-due-day').value = '';
+        document.getElementById('custom-bill-category-input').classList.add('hidden');
+        document.getElementById('custom-bill-category-name').value = '';
+
+        // Reload recurring bills
+        await loadRecurringBills(householdId);
+
+      } catch (error) {
+        errorDiv.textContent = 'Error adding recurring bill: ' + error.message;
+        console.error('Error:', error);
+      }
+    });
+
+    // Helper function to generate invite code
+    function generateInviteCode() {
+      return Math.random().toString(36).substring(2, 8).toUpperCase();
+    }
+
+    // Helper function to check if user has a household
+    async function getUserHousehold(userId) {
+      const userDoc = await getDoc(doc(db, 'users', userId));
+      if (userDoc.exists() && userDoc.data().householdId) {
+        return userDoc.data().householdId;
+      }
+      return null;
+    }
+
+    // Helper function to load household data
+    async function loadHouseholdData(householdId) {
+      const householdDoc = await getDoc(doc(db, 'households', householdId));
+      if (householdDoc.exists()) {
+        return householdDoc.data();
+      }
+      return null;
+    }
+
+    // Create Household
+    document.getElementById('submit-create-household').addEventListener('click', async () => {
+      const householdName = document.getElementById('household-name').value.trim();
+      const errorDiv = document.getElementById('create-household-error');
+      errorDiv.textContent = '';
+
+      if (!householdName) {
+        errorDiv.textContent = 'Please enter a household name';
+        return;
+      }
+
+      try {
+        const user = auth.currentUser;
+        const inviteCode = generateInviteCode();
+        
+        // Create household document
+        const householdRef = await addDoc(collection(db, 'households'), {
+          name: householdName,
+          inviteCode: inviteCode,
+          createdBy: user.uid,
+          createdAt: new Date().toISOString(),
+          members: [user.uid]
+        });
+
+        // Update user document with household ID
+        await setDoc(doc(db, 'users', user.uid), {
+          email: user.email,
+          householdId: householdRef.id,
+          joinedAt: new Date().toISOString()
+        });
+
+        // Clear form and show main app
+        document.getElementById('household-name').value = '';
+        createHouseholdForm.classList.add('hidden');
+        mainApp.classList.remove('hidden');
+        
+        // Display household info
+        document.getElementById('current-household-name').textContent = householdName;
+        document.getElementById('household-invite-code').textContent = inviteCode;
+        
+      } catch (error) {
+        errorDiv.textContent = 'Error creating household: ' + error.message;
+      }
+    });
+
+    // Join Household
+    document.getElementById('submit-join-household').addEventListener('click', async () => {
+      const inviteCode = document.getElementById('invite-code').value.trim().toUpperCase();
+      const errorDiv = document.getElementById('join-household-error');
+      errorDiv.textContent = '';
+
+      if (!inviteCode) {
+        errorDiv.textContent = 'Please enter an invite code';
+        return;
+      }
+
+      try {
+        const user = auth.currentUser;
+        
+        // Find household with this invite code
+        const q = query(collection(db, 'households'), where('inviteCode', '==', inviteCode));
+        const querySnapshot = await getDocs(q);
+        
+        if (querySnapshot.empty) {
+          errorDiv.textContent = 'Invalid invite code';
+          return;
+        }
+
+        // Get the household document
+        const householdDoc = querySnapshot.docs[0];
+        const householdId = householdDoc.id;
+        const householdData = householdDoc.data();
+
+        // Update household to add this user to members
+        const updatedMembers = [...householdData.members, user.uid];
+        await setDoc(doc(db, 'households', householdId), {
+          ...householdData,
+          members: updatedMembers
+        });
+
+        // Update user document with household ID
+        await setDoc(doc(db, 'users', user.uid), {
+          email: user.email,
+          householdId: householdId,
+          joinedAt: new Date().toISOString()
+        });
+
+        // Clear form and show main app
+        document.getElementById('invite-code').value = '';
+        joinHouseholdForm.classList.add('hidden');
+        mainApp.classList.remove('hidden');
+        
+        // Display household info
+        document.getElementById('current-household-name').textContent = householdData.name;
+        document.getElementById('household-invite-code').textContent = householdData.inviteCode;
+        
+      } catch (error) {
+        errorDiv.textContent = 'Error joining household: ' + error.message;
+      }
+    });
+
+    // Sign Up
+    document.getElementById('signup-btn').addEventListener('click', () => {
+      const email = document.getElementById('signup-email').value;
+      const password = document.getElementById('signup-password').value;
+      signupError.textContent = '';
+
+      if (!email || !password) {
+        signupError.textContent = 'Please fill in all fields';
+        return;
+      }
+
+      if (password.length < 6) {
+        signupError.textContent = 'Password must be at least 6 characters';
+        return;
+      }
+
+      createUserWithEmailAndPassword(auth, email, password)
+        .then((userCredential) => {
+          console.log('User created:', userCredential.user);
+          // Clear form
+          document.getElementById('signup-email').value = '';
+          document.getElementById('signup-password').value = '';
+        })
+        .catch((error) => {
+          signupError.textContent = error.message;
+        });
+    });
+
+    // Login
+    document.getElementById('login-btn').addEventListener('click', () => {
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-password').value;
+      loginError.textContent = '';
+
+      if (!email || !password) {
+        loginError.textContent = 'Please fill in all fields';
+        return;
+      }
+
+      signInWithEmailAndPassword(auth, email, password)
+        .then((userCredential) => {
+          console.log('Logged in:', userCredential.user);
+          // Clear form
+          document.getElementById('login-email').value = '';
+          document.getElementById('login-password').value = '';
+        })
+        .catch((error) => {
+          loginError.textContent = error.message;
+        });
+    });
+
+    // Logout
+    document.getElementById('logout-btn').addEventListener('click', () => {
+      signOut(auth)
+        .then(() => {
+          console.log('Logged out');
+        })
+        .catch((error) => {
+          console.error('Logout error:', error);
+        });
+    });
+
+    document.getElementById('logout-btn-main').addEventListener('click', () => {
+      signOut(auth)
+        .then(() => {
+          console.log('Logged out');
+        })
+        .catch((error) => {
+          console.error('Logout error:', error);
+        });
+    });
+
+    // Listen for auth state changes
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        // User is signed in - check if they have a household
+        const householdId = await getUserHousehold(user.uid);
+        
+        if (householdId) {
+          // User has a household - load main app
+          const householdData = await loadHouseholdData(householdId);
+          
+          signupForm.classList.add('hidden');
+          loginForm.classList.add('hidden');
+          userInfo.classList.add('hidden');
+          householdSetup.classList.add('hidden');
+          createHouseholdForm.classList.add('hidden');
+          joinHouseholdForm.classList.add('hidden');
+          mainApp.classList.remove('hidden');
+          
+          // Display household info
+          if (householdData) {
+            document.getElementById('current-household-name').textContent = householdData.name;
+            document.getElementById('household-invite-code').textContent = householdData.inviteCode;
+          }
+          
+          // Auto-create recurring bills for current month (if not already created)
+          await autoCreateRecurringBills(householdId);
+          
+          // Load transactions, category spending, and recurring bills
+          await loadTransactions(householdId);
+          const currentMonth = new Date().toISOString().substring(0, 7);
+          await loadCategorySpending(householdId, currentMonth);
+          await loadRecurringBills(householdId);
+        } else {
+          // User doesn't have a household - show setup
+          signupForm.classList.add('hidden');
+          loginForm.classList.add('hidden');
+          userInfo.classList.add('hidden');
+          householdSetup.classList.remove('hidden');
+          createHouseholdForm.classList.add('hidden');
+          joinHouseholdForm.classList.add('hidden');
+          mainApp.classList.add('hidden');
+        }
+        
+        console.log('User authenticated:', user.uid);
+      } else {
+        // User is signed out
+        signupForm.classList.remove('hidden');
+        loginForm.classList.add('hidden');
+        userInfo.classList.add('hidden');
+        householdSetup.classList.add('hidden');
+        createHouseholdForm.classList.add('hidden');
+        joinHouseholdForm.classList.add('hidden');
+        mainApp.classList.add('hidden');
+      }
+    });
+  </script>
+
+</body>
+</html>
