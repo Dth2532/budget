@@ -2037,51 +2037,10 @@
       }
     });
 
-    // Auto-create recurring bills as transactions
+    // Auto-create recurring bills as transactions - DISABLED
+    // Bills are now only added to transactions when marked as paid
     async function autoCreateRecurringBills(householdId) {
-      try {
-        const q = query(
-          collection(db, 'recurringBills'),
-          where('householdId', '==', householdId)
-        );
-
-        const querySnapshot = await getDocs(q);
-        const today = new Date();
-        const currentMonth = today.toISOString().substring(0, 7);
-
-        for (const billDoc of querySnapshot.docs) {
-          const bill = billDoc.data();
-          const billDate = `${currentMonth}-${String(bill.dayOfMonth).padStart(2, '0')}`;
-
-          const transactionQuery = query(
-            collection(db, 'transactions'),
-            where('householdId', '==', householdId),
-            where('date', '==', billDate),
-            where('category', '==', bill.category),
-            where('amount', '==', bill.amount)
-          );
-
-          const existingTransactions = await getDocs(transactionQuery);
-
-          if (existingTransactions.empty && today.getDate() >= bill.dayOfMonth) {
-            const transactionData = {
-              householdId: householdId,
-              userId: bill.createdBy,
-              type: 'expense',
-              amount: bill.amount,
-              category: bill.category,
-              description: `${bill.name} (auto)`,
-              date: billDate,
-              createdAt: new Date().toISOString(),
-              isRecurring: true
-            };
-
-            await addDoc(collection(db, 'transactions'), transactionData);
-          }
-        }
-      } catch (error) {
-        console.error('Error auto-creating bills:', error);
-      }
+      // No-op: transactions are created when a bill is marked paid
     }
 
     // Load budget
@@ -2447,38 +2406,61 @@
       }
     }
 
-    // Mark bill as paid
+    // Mark bill as paid — creates a real transaction
     window.markBillPaid = async function(billId, month) {
       try {
         const user = auth.currentUser;
         const userDoc = await getDoc(doc(db, 'users', user.uid));
         const householdId = userDoc.data().householdId;
 
-        // Store paid record in Firestore
+        // Get the bill details
+        const billDoc = await getDoc(doc(db, 'recurringBills', billId));
+        if (!billDoc.exists()) return;
+        const bill = billDoc.data();
+
+        // Create the actual transaction
+        const billDate = `${month}-${String(bill.dayOfMonth).padStart(2, '0')}`;
+        const transactionRef = await addDoc(collection(db, 'transactions'), {
+          householdId: householdId,
+          userId: user.uid,
+          type: 'expense',
+          amount: bill.amount,
+          category: bill.category,
+          description: `${bill.name}`,
+          date: billDate,
+          createdAt: new Date().toISOString(),
+          isRecurring: true
+        });
+
+        // Store paid record with the transaction ID so we can delete it if undone
         await addDoc(collection(db, 'paidBills'), {
           billId: billId,
+          transactionId: transactionRef.id,
           householdId: householdId,
           month: month,
           paidBy: user.uid,
           paidAt: new Date().toISOString()
         });
 
-        // Refresh dashboard
+        // Refresh all displays
         const currentMonth = new Date().toISOString().substring(0, 7);
+        await loadTransactions(householdId);
+        await loadCategorySpending(householdId, currentMonth);
+        await updateBudgetDisplay(householdId, currentMonth);
         await updateDashboard(householdId, currentMonth);
       } catch (error) {
         console.error('Error marking bill paid:', error);
       }
     };
 
-    // Undo mark bill as paid
+    // Undo mark bill as paid — deletes the transaction too
     window.unmarkBillPaid = async function(billId, month) {
       try {
         const user = auth.currentUser;
         const userDoc = await getDoc(doc(db, 'users', user.uid));
         const householdId = userDoc.data().householdId;
 
-        // Find and delete the paid record
+        // Find the paid record to get the transaction ID
         const q = query(
           collection(db, 'paidBills'),
           where('householdId', '==', householdId),
@@ -2486,12 +2468,24 @@
           where('month', '==', month)
         );
         const snapshot = await getDocs(q);
+
         for (const paidDoc of snapshot.docs) {
+          const transactionId = paidDoc.data().transactionId;
+
+          // Delete the transaction if it exists
+          if (transactionId) {
+            await deleteDoc(doc(db, 'transactions', transactionId));
+          }
+
+          // Delete the paid record
           await deleteDoc(doc(db, 'paidBills', paidDoc.id));
         }
 
-        // Refresh dashboard
+        // Refresh all displays
         const currentMonth = new Date().toISOString().substring(0, 7);
+        await loadTransactions(householdId);
+        await loadCategorySpending(householdId, currentMonth);
+        await updateBudgetDisplay(householdId, currentMonth);
         await updateDashboard(householdId, currentMonth);
       } catch (error) {
         console.error('Error unmarking bill paid:', error);
