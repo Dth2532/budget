@@ -107,6 +107,73 @@
       border-radius: 8px;
       text-align: center;
     }
+
+    .stat-box-clickable {
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+    }
+
+    .stat-box-clickable:hover {
+      background: #f0f0ff;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+    }
+
+    .stat-box-clickable:hover .stat-label {
+      color: #667eea;
+    }
+
+    /* Category settings toggle */
+    .category-setting-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .category-setting-row:last-child {
+      border-bottom: none;
+    }
+
+    .category-setting-name {
+      font-size: 14px;
+      font-weight: 600;
+      text-transform: capitalize;
+      color: #333;
+    }
+
+    .category-type-toggle {
+      display: flex;
+      gap: 0;
+      border-radius: 20px;
+      overflow: hidden;
+      border: 2px solid #e0e0e0;
+    }
+
+    .category-type-toggle button {
+      border: none;
+      padding: 5px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      background: #f9f9f9;
+      color: #999;
+      margin: 0;
+      border-radius: 0;
+      width: auto;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .category-type-toggle button.active-fixed {
+      background: #dc3545;
+      color: white;
+    }
+
+    .category-type-toggle button.active-discretionary {
+      background: #FF9F40;
+      color: white;
+    }
     
     .stat-label {
       font-size: 12px;
@@ -615,12 +682,12 @@
       <div class="card">
         <h3>Quick Overview</h3>
         <div class="stats-grid">
-          <div class="stat-box">
-            <div class="stat-label">Fixed Bills</div>
+          <div class="stat-box stat-box-clickable" onclick="openGroupModal('fixed')" title="Click to view fixed bill transactions">
+            <div class="stat-label">Fixed Bills ›</div>
             <div class="stat-value" style="color: #dc3545;" id="dashboard-fixed-bills">$0</div>
           </div>
-          <div class="stat-box">
-            <div class="stat-label">Discretionary</div>
+          <div class="stat-box stat-box-clickable" onclick="openGroupModal('discretionary')" title="Click to view discretionary transactions">
+            <div class="stat-label">Discretionary ›</div>
             <div class="stat-value" style="color: #FF9F40;" id="dashboard-discretionary">$0</div>
           </div>
         </div>
@@ -777,6 +844,13 @@
         <div id="category-budget-inputs"></div>
         <button id="save-budget-btn">Save Budget</button>
         <div id="budget-error" class="error"></div>
+      </div>
+
+      <!-- Category Settings -->
+      <div class="card">
+        <h3>Category Settings</h3>
+        <p style="font-size: 13px; color: #666; margin: 0 0 14px 0;">Toggle each category between Fixed and Discretionary. This controls how they appear in your Dashboard overview.</p>
+        <div id="category-settings-list"></div>
       </div>
     </div>
   </div>
@@ -1111,6 +1185,87 @@
       }
     }
 
+    // Default fixed categories — used as fallback if user hasn't set preferences
+    const DEFAULT_FIXED_CATEGORIES = ['rent', 'utilities', 'subscriptions'];
+    let categoryTypeMap = {}; // { groceries: 'discretionary', rent: 'fixed', car: 'fixed', ... }
+
+    // Load category type settings from household
+    async function loadCategorySettings(householdId) {
+      try {
+        const householdDoc = await getDoc(doc(db, 'households', householdId));
+        if (householdDoc.exists() && householdDoc.data().categoryTypes) {
+          categoryTypeMap = householdDoc.data().categoryTypes;
+        } else {
+          // Seed defaults
+          categoryTypeMap = {};
+          DEFAULT_FIXED_CATEGORIES.forEach(c => { categoryTypeMap[c] = 'fixed'; });
+        }
+      } catch (error) {
+        console.error('Error loading category settings:', error);
+        categoryTypeMap = {};
+      }
+    }
+
+    // Save category type settings to household
+    async function saveCategorySettings(householdId) {
+      await setDoc(doc(db, 'households', householdId), {
+        categoryTypes: categoryTypeMap
+      }, { merge: true });
+    }
+
+    // All categories: built-in + custom
+    const BUILTIN_CATEGORIES = ['groceries', 'dining', 'utilities', 'rent', 'transportation',
+      'entertainment', 'healthcare', 'shopping', 'subscriptions', 'other'];
+
+    // Render the category settings list in the Budget tab
+    async function renderCategorySettings(householdId) {
+      const customCategories = await loadCustomCategories(householdId);
+      const allCategories = [...new Set([...BUILTIN_CATEGORIES, ...customCategories])];
+      const container = document.getElementById('category-settings-list');
+      container.innerHTML = '';
+
+      if (allCategories.length === 0) {
+        container.innerHTML = '<p style="color:#666; font-size:13px;">No categories yet.</p>';
+        return;
+      }
+
+      allCategories.forEach(category => {
+        const type = categoryTypeMap[category] || 'discretionary';
+
+        const row = document.createElement('div');
+        row.className = 'category-setting-row';
+        row.id = `setting-row-${category}`;
+        row.innerHTML = `
+          <span class="category-setting-name">${category}</span>
+          <div class="category-type-toggle">
+            <button id="btn-fixed-${category}"
+              class="${type === 'fixed' ? 'active-fixed' : ''}"
+              onclick="setCategoryType('${category}', 'fixed', '${householdId}')">Fixed</button>
+            <button id="btn-disc-${category}"
+              class="${type === 'discretionary' ? 'active-discretionary' : ''}"
+              onclick="setCategoryType('${category}', 'discretionary', '${householdId}')">Discretionary</button>
+          </div>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    // Toggle a category's type and save
+    window.setCategoryType = async function(category, type, householdId) {
+      categoryTypeMap[category] = type;
+      await saveCategorySettings(householdId);
+
+      // Update button states
+      const fixedBtn = document.getElementById(`btn-fixed-${category}`);
+      const discBtn = document.getElementById(`btn-disc-${category}`);
+      fixedBtn.className = type === 'fixed' ? 'active-fixed' : '';
+      discBtn.className = type === 'discretionary' ? 'active-discretionary' : '';
+
+      // Refresh dashboard totals
+      const currentMonth = new Date().toISOString().substring(0, 7);
+      await updateDashboard(householdId, currentMonth);
+    };
+
     // Add custom category to household
     async function addCustomCategory(householdId, categoryName) {
       try {
@@ -1254,6 +1409,7 @@
         if (customCategory) {
           category = await addCustomCategory(householdId, customCategory);
           await populateCategoryDropdowns(householdId);
+          await renderCategorySettings(householdId);
         }
 
         const transactionData = {
@@ -1732,6 +1888,92 @@
       document.getElementById('category-drilldown-modal').classList.remove('active');
     };
 
+    // Open group modal (fixed bills or discretionary)
+    window.openGroupModal = function(group) {
+      const isFixed = group === 'fixed';
+      const groupData = dashboardGroupCache[group];
+      const color = isFixed ? '#dc3545' : '#FF9F40';
+      const title = isFixed ? 'Fixed Bills' : 'Discretionary';
+
+      // Calculate totals
+      let total = 0;
+      let txCount = 0;
+      Object.values(groupData).forEach(txList => {
+        txList.forEach(t => { total += t.amount; txCount++; });
+      });
+
+      document.getElementById('category-modal-title').textContent = title;
+      document.getElementById('category-modal-color').style.background = color;
+      document.getElementById('category-modal-total').textContent = `$${total.toFixed(2)}`;
+      document.getElementById('category-modal-count').textContent = txCount;
+      document.getElementById('category-modal-pct').textContent = '';
+
+      const listDiv = document.getElementById('category-modal-transactions');
+      listDiv.innerHTML = '';
+
+      const categories = Object.keys(groupData);
+      if (categories.length === 0) {
+        listDiv.innerHTML = '<p style="text-align: center; color: #666;">No transactions this month</p>';
+      } else {
+        // Group by category with a header for each
+        categories
+          .sort((a, b) => {
+            const aTotal = groupData[a].reduce((s, t) => s + t.amount, 0);
+            const bTotal = groupData[b].reduce((s, t) => s + t.amount, 0);
+            return bTotal - aTotal;
+          })
+          .forEach(category => {
+            const txList = groupData[category];
+            const catTotal = txList.reduce((s, t) => s + t.amount, 0);
+
+            // Category header
+            const header = document.createElement('div');
+            header.style.cssText = `
+              display: flex; justify-content: space-between; align-items: center;
+              background: #f5f5f5; border-radius: 8px; padding: 8px 12px;
+              margin: 12px 0 6px 0; font-weight: 700; font-size: 14px;
+              text-transform: capitalize;
+            `;
+            header.innerHTML = `
+              <span style="display: flex; align-items: center; gap: 8px;">
+                <span style="width: 10px; height: 10px; border-radius: 50%; background: ${color}; display: inline-block;"></span>
+                ${category}
+              </span>
+              <span style="color: ${color};">$${catTotal.toFixed(2)}</span>
+            `;
+            listDiv.appendChild(header);
+
+            // Transactions under this category
+            txList.forEach(transaction => {
+              const div = document.createElement('div');
+              div.className = 'transaction-item expense';
+              div.style.marginBottom = '6px';
+              const formattedDate = new Date(transaction.date + 'T00:00:00').toLocaleDateString();
+              div.innerHTML = `
+                <div class="transaction-details">
+                  <div style="font-weight: 600; font-size: 14px;">${transaction.description || category}</div>
+                  <div class="transaction-date">${formattedDate}</div>
+                </div>
+                <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+                  <div class="transaction-amount expense">-$${transaction.amount.toFixed(2)}</div>
+                  <div style="display: flex; gap: 4px;">
+                    <button class="delete-btn" style="background: #667eea; font-size: 11px; padding: 3px 7px;"
+                      onclick="closeCategoryModal(); editTransaction('${transaction.id}', '${transaction.type}', ${transaction.amount}, '${transaction.category}', '${(transaction.description || '').replace(/'/g, "\\'")}', '${transaction.date}')">Edit</button>
+                    <button class="delete-btn" style="font-size: 11px; padding: 3px 7px;"
+                      onclick="closeCategoryModal(); deleteTransaction('${transaction.id}')">Delete</button>
+                  </div>
+                </div>
+              `;
+              listDiv.appendChild(div);
+            });
+          });
+      }
+
+      // Hide "View in Transactions" for group modal — use type filter instead
+      currentDrilldownCategory = null;
+      document.getElementById('category-drilldown-modal').classList.add('active');
+    };
+
     let currentDrilldownCategory = null;
 
     window.viewCategoryInTransactions = function() {
@@ -1741,11 +1983,15 @@
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
       document.getElementById('transactions').classList.add('active');
       document.querySelectorAll('.tab')[1].classList.add('active');
-      // Apply category filter
+      // Apply category filter if from category drilldown, otherwise just show expenses
       if (currentDrilldownCategory) {
         document.getElementById('filter-category').value = currentDrilldownCategory;
-        renderTransactions();
+        document.getElementById('filter-type').value = 'expense';
+      } else {
+        document.getElementById('filter-category').value = '';
+        document.getElementById('filter-type').value = 'expense';
       }
+      renderTransactions();
     };
 
     // Add recurring bill
@@ -1792,6 +2038,7 @@
         if (customCategory) {
           category = await addCustomCategory(householdId, customCategory);
           await populateCategoryDropdowns(householdId);
+          await renderCategorySettings(householdId);
         }
 
         const billData = {
@@ -2263,6 +2510,9 @@
       }
     }
 
+    // Cache for group drilldown
+    let dashboardGroupCache = { fixed: {}, discretionary: {} };
+
     // Update dashboard
     async function updateDashboard(householdId, yearMonth) {
       try {
@@ -2277,7 +2527,8 @@
         let fixedBills = 0;
         let discretionary = 0;
 
-        const fixedCategories = ['rent', 'utilities', 'subscriptions'];
+        // Reset cache
+        dashboardGroupCache = { fixed: {}, discretionary: {} };
 
         querySnapshot.forEach((doc) => {
           const transaction = doc.data();
@@ -2286,13 +2537,24 @@
 
           if (transactionMonth === yearMonth && transaction.type === 'expense') {
             totalExpenses += transaction.amount;
+            // Use user-defined type map, default to discretionary if not set
+            const group = (categoryTypeMap[transaction.category] === 'fixed') ? 'fixed' : 'discretionary';
 
-            if (fixedCategories.includes(transaction.category)) {
-              fixedBills += transaction.amount;
-            } else {
-              discretionary += transaction.amount;
+            if (group === 'fixed') fixedBills += transaction.amount;
+            else discretionary += transaction.amount;
+
+            if (!dashboardGroupCache[group][transaction.category]) {
+              dashboardGroupCache[group][transaction.category] = [];
             }
+            dashboardGroupCache[group][transaction.category].push({ id: doc.id, ...transaction });
           }
+        });
+
+        // Sort each category's transactions by date descending
+        ['fixed', 'discretionary'].forEach(group => {
+          Object.keys(dashboardGroupCache[group]).forEach(cat => {
+            dashboardGroupCache[group][cat].sort((a, b) => new Date(b.date) - new Date(a.date));
+          });
         });
 
         document.getElementById('dashboard-fixed-bills').textContent = `$${fixedBills.toFixed(2)}`;
@@ -2515,6 +2777,7 @@
           await autoCreateRecurringBills(householdId);
 
           const currentMonth = new Date().toISOString().substring(0, 7);
+          await loadCategorySettings(householdId);
           await populateCategoryDropdowns(householdId);
           await loadTransactions(householdId);
           await loadCategorySpending(householdId, currentMonth);
@@ -2522,6 +2785,7 @@
           await loadBudget(householdId);
           await updateBudgetDisplay(householdId, currentMonth);
           await updateDashboard(householdId, currentMonth);
+          await renderCategorySettings(householdId);
         } else {
           signupForm.classList.add('hidden');
           loginForm.classList.add('hidden');
