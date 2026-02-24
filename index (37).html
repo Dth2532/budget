@@ -1,0 +1,3217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ballin on a Budget</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+    
+    header {
+      background: white;
+      padding: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    
+    header h1 {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin: 0;
+      text-align: center;
+      font-size: 24px;
+    }
+    
+    .tabs {
+      display: flex;
+      background: white;
+      position: sticky;
+      top: 64px;
+      z-index: 99;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .tab {
+      flex: 1;
+      padding: 15px 10px;
+      text-align: center;
+      cursor: pointer;
+      border: none;
+      background: white;
+      color: #666;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.3s;
+      border-bottom: 3px solid transparent;
+    }
+    
+    .tab:hover {
+      background: #f8f9ff;
+    }
+    
+    .tab.active {
+      color: #667eea;
+      border-bottom: 3px solid #667eea;
+    }
+    
+    .tab-content {
+      display: none;
+      padding: 20px;
+      animation: fadeIn 0.3s;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    .card h3 {
+      margin-top: 0;
+      color: #333;
+    }
+    
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    
+    .stat-box {
+      background: #f9f9f9;
+      padding: 15px;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .stat-box-clickable {
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+    }
+
+    .stat-box-clickable:hover {
+      background: #f0f0ff;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+    }
+
+    .stat-box-clickable:hover .stat-label {
+      color: #667eea;
+    }
+
+    /* Category settings toggle */
+    .category-setting-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .category-setting-row:last-child {
+      border-bottom: none;
+    }
+
+    .category-setting-name {
+      font-size: 14px;
+      font-weight: 600;
+      text-transform: capitalize;
+      color: #333;
+    }
+
+    .category-type-toggle {
+      display: flex;
+      gap: 0;
+      border-radius: 20px;
+      overflow: hidden;
+      border: 2px solid #e0e0e0;
+    }
+
+    .category-type-toggle button {
+      border: none;
+      padding: 5px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      background: #f9f9f9;
+      color: #999;
+      margin: 0;
+      border-radius: 0;
+      width: auto;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .category-type-toggle button.active-fixed {
+      background: #dc3545;
+      color: white;
+    }
+
+    .category-type-toggle button.active-discretionary {
+      background: #FF9F40;
+      color: white;
+    }
+    
+    .stat-label {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 5px;
+    }
+    
+    .stat-value {
+      font-size: 20px;
+      font-weight: bold;
+      color: #667eea;
+    }
+    
+    input, select {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      box-sizing: border-box;
+      font-size: 15px;
+    }
+    
+    button {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 600;
+      margin-top: 10px;
+    }
+    
+    button:hover {
+      opacity: 0.9;
+    }
+    
+    .hidden {
+      display: none;
+    }
+    
+    /* Auth Forms */
+    .form-container {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      margin: 50px 20px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    .form-container h2 {
+      text-align: center;
+      color: #333;
+    }
+    
+    .toggle-link {
+      text-align: center;
+      margin-top: 15px;
+      color: #667eea;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+    
+    .error {
+      color: #dc3545;
+      font-size: 14px;
+      margin-top: 10px;
+      text-align: center;
+    }
+    
+    #logout-btn {
+      background: #dc3545;
+      margin: 10px 20px;
+    }
+    
+    /* Transaction Items */
+    .transaction-item {
+      background: #f9f9f9;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-left: 4px solid transparent;
+    }
+    
+    .transaction-item.income {
+      border-left-color: #28a745;
+    }
+    
+    .transaction-item.expense {
+      border-left-color: #dc3545;
+    }
+
+    .transaction-item.savings {
+      border-left-color: #667eea;
+    }
+    
+    .transaction-details {
+      flex: 1;
+    }
+    
+    .transaction-category {
+      font-size: 12px;
+      color: #666;
+      text-transform: capitalize;
+    }
+    
+    .transaction-date {
+      font-size: 12px;
+      color: #999;
+    }
+    
+    .transaction-amount {
+      font-size: 18px;
+      font-weight: bold;
+    }
+    
+    .transaction-amount.income {
+      color: #28a745;
+    }
+    
+    .transaction-amount.expense {
+      color: #dc3545;
+    }
+
+    .transaction-amount.savings {
+      color: #667eea;
+    }
+    
+    /* Bill Items */
+    .bill-item {
+      background: #f9f9f9;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .bill-item.due-soon {
+      border-left: 4px solid #FF9F40;
+    }
+    
+    .bill-item.overdue {
+      border-left: 4px solid #dc3545;
+    }
+    
+    .bill-name {
+      font-weight: bold;
+      margin-bottom: 3px;
+    }
+    
+    .bill-info {
+      font-size: 12px;
+      color: #666;
+    }
+    
+    .bill-amount {
+      font-size: 18px;
+      font-weight: bold;
+      color: #dc3545;
+    }
+    
+    .bill-due {
+      font-size: 12px;
+      color: #999;
+      margin-top: 3px;
+    }
+    
+    .delete-btn {
+      background: #dc3545;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      margin-left: 10px;
+    }
+    
+    .delete-btn:hover {
+      background: #c82333;
+    }
+    
+    /* Legend Items */
+    .legend-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .legend-item:last-child {
+      border-bottom: none;
+    }
+    
+    .legend-color {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      margin-right: 10px;
+      flex-shrink: 0;
+    }
+    
+    .legend-label {
+      flex: 1;
+      text-transform: capitalize;
+    }
+    
+    .legend-amount {
+      font-weight: bold;
+      margin-left: 10px;
+    }
+    
+    .legend-percentage {
+      color: #666;
+      font-size: 14px;
+      margin-left: 5px;
+    }
+    
+    /* Budget Progress */
+    .budget-category-item {
+      background: #f9f9f9;
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+    
+    .budget-progress-bar {
+      background: #e0e0e0;
+      border-radius: 4px;
+      height: 20px;
+      position: relative;
+      overflow: hidden;
+      margin-top: 5px;
+    }
+    
+    .budget-progress-fill {
+      height: 100%;
+      transition: width 0.3s, background 0.3s;
+      border-radius: 4px;
+    }
+    
+    .budget-progress-fill.good {
+      background: #28a745;
+    }
+    
+    .budget-progress-fill.warning {
+      background: #FF9F40;
+    }
+    
+    .budget-progress-fill.over {
+      background: #dc3545;
+    }
+    
+    /* Edit Modal */
+    .edit-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    .edit-modal.active {
+      display: flex;
+    }
+    
+    .edit-modal-content {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      max-width: 500px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+      animation: modalSlideIn 0.3s ease;
+    }
+    
+    @keyframes modalSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .edit-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    
+    .edit-modal-header h3 {
+      margin: 0;
+      color: #333;
+    }
+    
+    .edit-modal-close {
+      background: none;
+      border: none;
+      font-size: 28px;
+      color: #999;
+      cursor: pointer;
+      padding: 0;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: all 0.2s;
+    }
+    
+    .edit-modal-close:hover {
+      background: #f0f0f0;
+      color: #333;
+    }
+    
+    .edit-modal-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    
+    .edit-modal-buttons button {
+      flex: 1;
+    }
+    
+    .btn-cancel {
+      background: #6c757d !important;
+    }
+    
+    .btn-cancel:hover {
+      background: #5a6268 !important;
+    }
+
+    /* Legend item clickable */
+    .legend-item {
+      cursor: pointer;
+      border-radius: 8px;
+      padding: 8px !important;
+      transition: background 0.2s;
+    }
+
+    .legend-item:hover {
+      background: #f0f0ff;
+    }
+
+    .legend-item:hover .legend-label {
+      color: #667eea;
+      text-decoration: underline;
+    }
+
+    /* Category drilldown modal */
+    .category-modal-header-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 5px;
+    }
+
+    .category-color-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .category-modal-summary {
+      display: flex;
+      justify-content: space-between;
+      background: #f9f9f9;
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 16px;
+      font-size: 14px;
+      color: #555;
+    }
+
+    .category-modal-summary span {
+      font-weight: 700;
+      color: #333;
+    }
+
+    /* Paid bill state */
+    .bill-item.paid {
+      opacity: 0.6;
+      border-left: 4px solid #28a745 !important;
+    }
+
+    .bill-paid-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: #d4edda;
+      color: #28a745;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .mark-paid-btn {
+      background: linear-gradient(135deg, #28a745, #20c997) !important;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      width: auto !important;
+      margin: 0 !important;
+      transition: opacity 0.2s;
+    }
+
+    .mark-paid-btn:hover {
+      opacity: 0.85;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sign Up Form -->
+  <div id="signup-form" class="form-container">
+    <h2>Sign Up</h2>
+    <input type="email" id="signup-email" placeholder="Email" required>
+    <input type="password" id="signup-password" placeholder="Password (min 6 characters)" required>
+    <button id="signup-btn">Sign Up</button>
+    <div id="signup-error" class="error"></div>
+    <div class="toggle-link" id="show-login">Already have an account? Login</div>
+  </div>
+
+  <!-- Login Form -->
+  <div id="login-form" class="form-container hidden">
+    <h2>Login</h2>
+    <input type="email" id="login-email" placeholder="Email" required>
+    <input type="password" id="login-password" placeholder="Password" required>
+    <button id="login-btn">Login</button>
+    <div id="login-error" class="error"></div>
+    <div class="toggle-link" id="show-signup">Don't have an account? Sign Up</div>
+  </div>
+
+  <!-- Household Setup -->
+  <div id="household-setup" class="form-container hidden">
+    <h2>Set Up Your Household</h2>
+    <p style="text-align: center; color: #666;">Create a new household or join an existing one</p>
+    <button id="show-create-household">Create New Household</button>
+    <button id="show-join-household" style="background: #28a745;">Join Existing Household</button>
+    <button id="logout-btn-setup" style="background: #dc3545;">Logout</button>
+  </div>
+
+  <!-- Create Household Form -->
+  <div id="create-household-form" class="form-container hidden">
+    <h2>Create Household</h2>
+    <input type="text" id="household-name" placeholder="Household Name" required>
+    <button id="create-household-btn">Create Household</button>
+    <div id="create-household-error" class="error"></div>
+    <div class="toggle-link" id="back-to-household-setup">Back</div>
+  </div>
+
+  <!-- Join Household Form -->
+  <div id="join-household-form" class="form-container hidden">
+    <h2>Join Household</h2>
+    <input type="text" id="join-code" placeholder="6-digit invite code" required maxlength="6">
+    <button id="join-household-btn">Join Household</button>
+    <div id="join-household-error" class="error"></div>
+    <div class="toggle-link" id="back-to-household-setup-2">Back</div>
+  </div>
+
+  <!-- Main App (with tabs) -->
+  <div id="main-app" class="hidden">
+    <header>
+      <h1>Ballin on a Budget</h1>
+    </header>
+
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('dashboard')">📊 Dashboard</button>
+      <button class="tab" onclick="showTab('transactions')">💳 Transactions</button>
+      <button class="tab" onclick="showTab('bills')">📅 Bills</button>
+      <button class="tab" onclick="showTab('budget')">🎯 Budget</button>
+    </div>
+
+    <!-- Dashboard Tab -->
+    <div id="dashboard" class="tab-content active">
+      <div class="card">
+        <h3>Spending by Category</h3>
+        <canvas id="category-pie-chart" style="max-height: 300px; margin-bottom: 20px;"></canvas>
+        <div id="category-chart"></div>
+      </div>
+      
+      <div class="card">
+        <h3>Quick Overview</h3>
+        <div class="stats-grid">
+          <div class="stat-box stat-box-clickable" onclick="openGroupModal('fixed')" title="Click to view fixed bill transactions">
+            <div class="stat-label">Fixed Bills ›</div>
+            <div class="stat-value" style="color: #dc3545;" id="dashboard-fixed-bills">$0</div>
+          </div>
+          <div class="stat-box stat-box-clickable" onclick="openGroupModal('discretionary')" title="Click to view discretionary transactions">
+            <div class="stat-label">Discretionary ›</div>
+            <div class="stat-value" style="color: #FF9F40;" id="dashboard-discretionary">$0</div>
+          </div>
+          <div class="stat-box stat-box-clickable" onclick="openSavingsModal()" title="Click to view savings transactions">
+            <div class="stat-label">Savings ›</div>
+            <div class="stat-value" style="color: #667eea;" id="dashboard-savings">$0</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="card">
+        <h3>Monthly Budget</h3>
+        <div class="stats-grid">
+          <div class="stat-box">
+            <div class="stat-label">Income</div>
+            <div class="stat-value" style="color: #28a745;" id="dashboard-income">$0</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Leftover</div>
+            <div class="stat-value" style="color: #28a745;" id="dashboard-leftover">$0</div>
+          </div>
+        </div>
+        <div class="budget-progress-bar" style="margin-top: 10px;">
+          <div id="dashboard-progress-bar" class="budget-progress-fill good" style="width: 0%"></div>
+        </div>
+        <div style="font-size: 12px; color: #666; margin-top: 5px; text-align: center;" id="dashboard-progress-text">0% spent</div>
+      </div>
+      
+      <div class="card">
+        <h3>Upcoming Bills</h3>
+        <div id="upcoming-bills-preview"></div>
+      </div>
+      
+      <div class="card">
+        <h3>Household Info</h3>
+        <p style="margin: 5px 0;"><strong>Name:</strong> <span id="current-household-name"></span></p>
+        <p style="margin: 5px 0;"><strong>Invite Code:</strong> <span id="household-invite-code" style="font-family: monospace; background: #f0f0f0; padding: 2px 6px; border-radius: 4px;"></span></p>
+        <button id="logout-btn">Logout</button>
+      </div>
+    </div>
+
+    <!-- Transactions Tab -->
+    <div id="transactions" class="tab-content">
+      <div class="card">
+        <h3>Add Transaction</h3>
+        <select id="transaction-type">
+          <option value="expense">Expense</option>
+          <option value="income">Income</option>
+          <option value="savings">Savings</option>
+        </select>
+        <input type="number" id="transaction-amount" placeholder="Amount" step="0.01" required>
+        <select id="transaction-category">
+          <option value="">Select Category</option>
+          <option value="groceries">Groceries</option>
+          <option value="dining">Dining</option>
+          <option value="utilities">Utilities</option>
+          <option value="rent">Rent</option>
+          <option value="transportation">Transportation</option>
+          <option value="entertainment">Entertainment</option>
+          <option value="healthcare">Healthcare</option>
+          <option value="shopping">Shopping</option>
+          <option value="subscriptions">Subscriptions</option>
+          <option value="other">Other</option>
+          <option value="__custom__">+ Add Custom Category</option>
+        </select>
+        <input type="text" id="custom-transaction-category" placeholder="Enter custom category name" style="display: none;">
+        <input type="text" id="transaction-description" placeholder="Description (optional)">
+        <input type="date" id="transaction-date" required>
+        <button id="add-transaction-btn">Add Transaction</button>
+        <div id="transaction-error" class="error"></div>
+      </div>
+      
+      <div class="card">
+        <h3>Recent Transactions</h3>
+        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+          <select id="filter-category" style="flex: 1; margin: 0; padding: 10px; font-size: 14px;">
+            <option value="">All Categories</option>
+          </select>
+          <select id="filter-type" style="flex: 1; margin: 0; padding: 10px; font-size: 14px;">
+            <option value="">All Types</option>
+            <option value="expense">Expenses</option>
+            <option value="income">Income</option>
+            <option value="savings">Savings</option>
+          </select>
+        </div>
+        <div id="transactions-list"></div>
+      </div>
+    </div>
+
+    <!-- Bills Tab -->
+    <div id="bills" class="tab-content">
+      <div class="card">
+        <h3>Recurring Bills</h3>
+        <div id="recurring-bills-list"></div>
+      </div>
+      
+      <div class="card">
+        <h3>Add Recurring Bill</h3>
+        <input type="text" id="bill-name" placeholder="Bill Name" required>
+        <input type="number" id="bill-amount" placeholder="Amount" step="0.01" required>
+        <select id="bill-category">
+          <option value="">Select Category</option>
+          <option value="rent">Rent/Mortgage</option>
+          <option value="utilities">Utilities</option>
+          <option value="subscriptions">Subscriptions</option>
+          <option value="other">Other</option>
+          <option value="__custom__">+ Add Custom Category</option>
+        </select>
+        <input type="text" id="custom-bill-category" placeholder="Enter custom category name" style="display: none;">
+        <select id="bill-frequency">
+          <option value="monthly">Monthly</option>
+          <option value="weekly">Weekly</option>
+          <option value="biweekly">Bi-weekly (every 2 weeks)</option>
+          <option value="bimonthly">Bi-monthly (every 2 months)</option>
+        </select>
+        <div id="bill-schedule-inputs">
+          <input type="number" id="bill-day" placeholder="Day of month (1-31)" min="1" max="31" required>
+        </div>
+        <button id="add-bill-btn">Add Recurring Bill</button>
+        <div id="bill-error" class="error"></div>
+      </div>
+    </div>
+
+    <!-- Budget Tab -->
+    <div id="budget" class="tab-content">
+      <!-- Budget Overview (shown when budget exists) -->
+      <div id="budget-overview">
+        <div class="card">
+          <h3>Budget Overview</h3>
+          <div class="stats-grid">
+            <div class="stat-box">
+              <div class="stat-label">Income</div>
+              <div class="stat-value" style="color: #28a745;" id="budget-income-display">$0</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">Spending</div>
+              <div class="stat-value" style="color: #dc3545;" id="budget-spending-display">$0</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">Leftover</div>
+              <div class="stat-value" id="budget-leftover-display">$0</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">% Spent</div>
+              <div class="stat-value" id="overall-budget-percentage">0%</div>
+            </div>
+          </div>
+          <div class="budget-progress-bar">
+            <div id="overall-budget-bar" class="budget-progress-fill good" style="width: 0%"></div>
+          </div>
+        </div>
+        
+        <div class="card">
+          <h3>Category Budgets</h3>
+          <div id="category-budgets-list"></div>
+        </div>
+        
+        <div class="card">
+          <h3>Edit Budget</h3>
+          <button id="edit-budget-btn">Edit Budget Settings</button>
+        </div>
+      </div>
+
+      <!-- Budget Setup Form (shown when creating/editing budget) -->
+      <div id="budget-setup-form" class="card hidden">
+        <h3>Set Up Your Budget</h3>
+        <input type="number" id="budget-income" placeholder="Monthly Income" step="0.01" required>
+        <h4 style="margin: 20px 0 10px 0;">Category Limits (Optional)</h4>
+        <div id="category-budget-inputs"></div>
+        <button id="save-budget-btn">Save Budget</button>
+        <div id="budget-error" class="error"></div>
+      </div>
+
+      <!-- Category Settings -->
+      <div class="card">
+        <h3>Category Settings</h3>
+        <p style="font-size: 13px; color: #666; margin: 0 0 14px 0;">Toggle each category between Fixed and Discretionary. This controls how they appear in your Dashboard overview.</p>
+        <div id="category-settings-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Transaction Modal -->
+  <div id="edit-transaction-modal" class="edit-modal">
+    <div class="edit-modal-content">
+      <div class="edit-modal-header">
+        <h3>Edit Transaction</h3>
+        <button class="edit-modal-close" onclick="closeEditTransactionModal()">&times;</button>
+      </div>
+      <select id="edit-transaction-type">
+        <option value="expense">Expense</option>
+        <option value="income">Income</option>
+        <option value="savings">Savings</option>
+      </select>
+      <input type="number" id="edit-transaction-amount" placeholder="Amount" step="0.01" required>
+      <select id="edit-transaction-category">
+        <option value="">Select Category</option>
+        <option value="groceries">Groceries</option>
+        <option value="dining">Dining</option>
+        <option value="utilities">Utilities</option>
+        <option value="rent">Rent</option>
+        <option value="transportation">Transportation</option>
+        <option value="entertainment">Entertainment</option>
+        <option value="healthcare">Healthcare</option>
+        <option value="shopping">Shopping</option>
+        <option value="subscriptions">Subscriptions</option>
+        <option value="other">Other</option>
+        <option value="__custom__">+ Add Custom Category</option>
+      </select>
+      <input type="text" id="edit-custom-transaction-category" placeholder="Enter custom category name" style="display: none;">
+      <input type="text" id="edit-transaction-description" placeholder="Description (optional)">
+      <input type="date" id="edit-transaction-date" required>
+      <div id="edit-transaction-error" class="error"></div>
+      <div class="edit-modal-buttons">
+        <button class="btn-cancel" onclick="closeEditTransactionModal()">Cancel</button>
+        <button id="save-transaction-btn">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Bill Modal -->
+  <div id="edit-bill-modal" class="edit-modal">
+    <div class="edit-modal-content">
+      <div class="edit-modal-header">
+        <h3>Edit Recurring Bill</h3>
+        <button class="edit-modal-close" onclick="closeEditBillModal()">&times;</button>
+      </div>
+      <input type="text" id="edit-bill-name" placeholder="Bill Name" required>
+      <input type="number" id="edit-bill-amount" placeholder="Amount" step="0.01" required>
+      <select id="edit-bill-category">
+        <option value="">Select Category</option>
+        <option value="rent">Rent/Mortgage</option>
+        <option value="utilities">Utilities</option>
+        <option value="subscriptions">Subscriptions</option>
+        <option value="other">Other</option>
+        <option value="__custom__">+ Add Custom Category</option>
+      </select>
+      <input type="text" id="edit-custom-bill-category" placeholder="Enter custom category name" style="display: none;">
+      <div id="edit-bill-frequency-container">
+        <!-- Populated dynamically based on bill frequency -->
+      </div>
+      <div id="edit-bill-error" class="error"></div>
+      <div class="edit-modal-buttons">
+        <button class="btn-cancel" onclick="closeEditBillModal()">Cancel</button>
+        <button id="save-bill-btn">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Category Drilldown Modal -->
+  <div id="category-drilldown-modal" class="edit-modal">
+    <div class="edit-modal-content">
+      <div class="edit-modal-header">
+        <div class="category-modal-header-bar">
+          <div class="category-color-dot" id="category-modal-color"></div>
+          <h3 id="category-modal-title" style="margin: 0; text-transform: capitalize;"></h3>
+        </div>
+        <button class="edit-modal-close" onclick="closeCategoryModal()">&times;</button>
+      </div>
+      <div class="category-modal-summary">
+        <div>Total spent <span id="category-modal-total"></span></div>
+        <div><span id="category-modal-count"></span> transactions</div>
+        <div><span id="category-modal-pct"></span> of spending</div>
+      </div>
+      <div id="category-modal-transactions"></div>
+      <div class="edit-modal-buttons">
+        <button class="btn-cancel" onclick="closeCategoryModal()">Close</button>
+        <button onclick="viewCategoryInTransactions()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">View in Transactions</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } 
+      from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+    import { getFirestore, collection, addDoc, query, where, getDocs, doc, getDoc, setDoc, deleteDoc, orderBy, limit } 
+      from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyBbyOgSbmwxhqYaoPih0v_PpKQK208u0zU",
+      authDomain: "harris-house-ef670.firebaseapp.com",
+      projectId: "harris-house-ef670",
+      storageBucket: "harris-house-ef670.firebasestorage.app",
+      messagingSenderId: "398594469140",
+      appId: "1:398594469140:web:1bf73a98029f5800b06601"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // DOM elements
+    const signupForm = document.getElementById('signup-form');
+    const loginForm = document.getElementById('login-form');
+    const householdSetup = document.getElementById('household-setup');
+    const createHouseholdForm = document.getElementById('create-household-form');
+    const joinHouseholdForm = document.getElementById('join-household-form');
+    const mainApp = document.getElementById('main-app');
+
+    let currentBudget = null;
+
+    // Tab switching function
+    window.showTab = function(tabName) {
+      const contents = document.querySelectorAll('.tab-content');
+      contents.forEach(content => content.classList.remove('active'));
+      
+      const tabs = document.querySelectorAll('.tab');
+      tabs.forEach(tab => tab.classList.remove('active'));
+      
+      document.getElementById(tabName).classList.add('active');
+      event.target.classList.add('active');
+    };
+
+    // Toggle between signup and login
+    document.getElementById('show-login').addEventListener('click', () => {
+      signupForm.classList.add('hidden');
+      loginForm.classList.remove('hidden');
+    });
+
+    document.getElementById('show-signup').addEventListener('click', () => {
+      loginForm.classList.add('hidden');
+      signupForm.classList.remove('hidden');
+    });
+
+    // Sign Up
+    document.getElementById('signup-btn').addEventListener('click', async () => {
+      const email = document.getElementById('signup-email').value;
+      const password = document.getElementById('signup-password').value;
+      const errorDiv = document.getElementById('signup-error');
+      errorDiv.textContent = '';
+
+      try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        console.log('User signed up:', userCredential.user.uid);
+      } catch (error) {
+        errorDiv.textContent = error.message;
+      }
+    });
+
+    // Login
+    document.getElementById('login-btn').addEventListener('click', async () => {
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-password').value;
+      const errorDiv = document.getElementById('login-error');
+      errorDiv.textContent = '';
+
+      try {
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        console.log('User logged in:', userCredential.user.uid);
+      } catch (error) {
+        errorDiv.textContent = error.message;
+      }
+    });
+
+    // Household setup navigation
+    document.getElementById('show-create-household').addEventListener('click', () => {
+      householdSetup.classList.add('hidden');
+      createHouseholdForm.classList.remove('hidden');
+    });
+
+    document.getElementById('show-join-household').addEventListener('click', () => {
+      householdSetup.classList.add('hidden');
+      joinHouseholdForm.classList.remove('hidden');
+    });
+
+    document.getElementById('back-to-household-setup').addEventListener('click', () => {
+      createHouseholdForm.classList.add('hidden');
+      householdSetup.classList.remove('hidden');
+    });
+
+    document.getElementById('back-to-household-setup-2').addEventListener('click', () => {
+      joinHouseholdForm.classList.add('hidden');
+      householdSetup.classList.remove('hidden');
+    });
+
+    // Generate random 6-digit code
+    function generateInviteCode() {
+      return Math.floor(100000 + Math.random() * 900000).toString();
+    }
+
+    // Create household
+    document.getElementById('create-household-btn').addEventListener('click', async () => {
+      const householdName = document.getElementById('household-name').value;
+      const errorDiv = document.getElementById('create-household-error');
+      errorDiv.textContent = '';
+
+      if (!householdName) {
+        errorDiv.textContent = 'Please enter a household name';
+        return;
+      }
+
+      try {
+        const user = auth.currentUser;
+        const inviteCode = generateInviteCode().toUpperCase();
+
+        console.log('Creating household with invite code:', inviteCode);
+
+        const householdData = {
+          name: householdName,
+          inviteCode: inviteCode,
+          createdBy: user.uid,
+          createdAt: new Date().toISOString(),
+          members: [user.uid]
+        };
+
+        const householdRef = await addDoc(collection(db, 'households'), householdData);
+
+        await setDoc(doc(db, 'users', user.uid), {
+          householdId: householdRef.id,
+          joinedAt: new Date().toISOString()
+        });
+
+        console.log('Household created successfully:', householdRef.id, 'Invite code:', inviteCode);
+        window.location.reload();
+      } catch (error) {
+        console.error('Create household error:', error);
+        errorDiv.textContent = 'Error creating household: ' + error.message;
+      }
+    });
+
+    // Join household
+    document.getElementById('join-household-btn').addEventListener('click', async () => {
+      const inviteCode = document.getElementById('join-code').value.trim().toUpperCase();
+      const errorDiv = document.getElementById('join-household-error');
+      errorDiv.textContent = '';
+
+      if (!inviteCode || inviteCode.length !== 6) {
+        errorDiv.textContent = 'Please enter a valid 6-character code';
+        return;
+      }
+
+      try {
+        const user = auth.currentUser;
+
+        // Check if user already has a household
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (userDoc.exists() && userDoc.data().householdId) {
+          errorDiv.textContent = 'You already belong to a household. Please logout and create a new account to join a different household.';
+          return;
+        }
+
+        console.log('Searching for household with invite code:', inviteCode);
+
+        const q = query(collection(db, 'households'), where('inviteCode', '==', inviteCode));
+        const querySnapshot = await getDocs(q);
+
+        console.log('Query results:', querySnapshot.size, 'households found');
+
+        if (querySnapshot.empty) {
+          errorDiv.textContent = 'Invalid invite code. Please check and try again.';
+          return;
+        }
+
+        const householdDoc = querySnapshot.docs[0];
+        const householdData = householdDoc.data();
+
+        console.log('Found household:', householdData.name);
+
+        // Check if user is already a member
+        if (householdData.members && householdData.members.includes(user.uid)) {
+          errorDiv.textContent = 'You are already a member of this household';
+          return;
+        }
+
+        const updatedMembers = householdData.members ? [...householdData.members, user.uid] : [user.uid];
+        await setDoc(householdDoc.ref, { members: updatedMembers }, { merge: true });
+
+        await setDoc(doc(db, 'users', user.uid), {
+          householdId: householdDoc.id,
+          joinedAt: new Date().toISOString()
+        });
+
+        console.log('Successfully joined household:', householdDoc.id);
+        alert('Successfully joined ' + householdData.name + '!');
+        window.location.reload();
+      } catch (error) {
+        console.error('Join household error:', error);
+        errorDiv.textContent = 'Error joining household: ' + error.message;
+      }
+    });
+
+    // Logout buttons
+    document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
+    document.getElementById('logout-btn-setup').addEventListener('click', () => signOut(auth));
+
+    // Get user's household ID
+    async function getUserHousehold(userId) {
+      try {
+        const userDoc = await getDoc(doc(db, 'users', userId));
+        if (userDoc.exists()) {
+          return userDoc.data().householdId;
+        }
+        return null;
+      } catch (error) {
+        console.error('Error getting user household:', error);
+        return null;
+      }
+    }
+
+    // Load custom categories for household
+    async function loadCustomCategories(householdId) {
+      try {
+        const householdDoc = await getDoc(doc(db, 'households', householdId));
+        if (householdDoc.exists() && householdDoc.data().customCategories) {
+          return householdDoc.data().customCategories;
+        }
+        return [];
+      } catch (error) {
+        console.error('Error loading custom categories:', error);
+        return [];
+      }
+    }
+
+    // Default fixed categories — used as fallback if user hasn't set preferences
+    const DEFAULT_FIXED_CATEGORIES = ['rent', 'utilities', 'subscriptions'];
+    let categoryTypeMap = {}; // { groceries: 'discretionary', rent: 'fixed', car: 'fixed', ... }
+
+    // Load category type settings from household
+    async function loadCategorySettings(householdId) {
+      try {
+        const householdDoc = await getDoc(doc(db, 'households', householdId));
+        if (householdDoc.exists() && householdDoc.data().categoryTypes) {
+          categoryTypeMap = householdDoc.data().categoryTypes;
+        } else {
+          // Seed defaults
+          categoryTypeMap = {};
+          DEFAULT_FIXED_CATEGORIES.forEach(c => { categoryTypeMap[c] = 'fixed'; });
+        }
+      } catch (error) {
+        console.error('Error loading category settings:', error);
+        categoryTypeMap = {};
+      }
+    }
+
+    // Save category type settings to household
+    async function saveCategorySettings(householdId) {
+      await setDoc(doc(db, 'households', householdId), {
+        categoryTypes: categoryTypeMap
+      }, { merge: true });
+    }
+
+    // All categories: built-in + custom
+    const BUILTIN_CATEGORIES = ['groceries', 'dining', 'utilities', 'rent', 'transportation',
+      'entertainment', 'healthcare', 'shopping', 'subscriptions', 'other'];
+
+    // Render the category settings list in the Budget tab
+    async function renderCategorySettings(householdId) {
+      const customCategories = await loadCustomCategories(householdId);
+      const allCategories = [...new Set([...BUILTIN_CATEGORIES, ...customCategories])];
+      const container = document.getElementById('category-settings-list');
+      container.innerHTML = '';
+
+      if (allCategories.length === 0) {
+        container.innerHTML = '<p style="color:#666; font-size:13px;">No categories yet.</p>';
+        return;
+      }
+
+      allCategories.forEach(category => {
+        const type = categoryTypeMap[category] || 'discretionary';
+
+        const row = document.createElement('div');
+        row.className = 'category-setting-row';
+        row.id = `setting-row-${category}`;
+        row.innerHTML = `
+          <span class="category-setting-name">${category}</span>
+          <div class="category-type-toggle">
+            <button id="btn-fixed-${category}"
+              class="${type === 'fixed' ? 'active-fixed' : ''}"
+              onclick="setCategoryType('${category}', 'fixed', '${householdId}')">Fixed</button>
+            <button id="btn-disc-${category}"
+              class="${type === 'discretionary' ? 'active-discretionary' : ''}"
+              onclick="setCategoryType('${category}', 'discretionary', '${householdId}')">Discretionary</button>
+          </div>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    // Toggle a category's type and save
+    window.setCategoryType = async function(category, type, householdId) {
+      categoryTypeMap[category] = type;
+      await saveCategorySettings(householdId);
+
+      // Update button states
+      const fixedBtn = document.getElementById(`btn-fixed-${category}`);
+      const discBtn = document.getElementById(`btn-disc-${category}`);
+      fixedBtn.className = type === 'fixed' ? 'active-fixed' : '';
+      discBtn.className = type === 'discretionary' ? 'active-discretionary' : '';
+
+      // Refresh dashboard totals
+      const currentMonth = new Date().toISOString().substring(0, 7);
+      await updateDashboard(householdId, currentMonth);
+    };
+
+    // Add custom category to household
+    async function addCustomCategory(householdId, categoryName) {
+      try {
+        const customCategories = await loadCustomCategories(householdId);
+        
+        // Normalize the category name (lowercase, trim)
+        const normalizedCategory = categoryName.toLowerCase().trim();
+        
+        // Check if it already exists
+        if (customCategories.includes(normalizedCategory)) {
+          return normalizedCategory;
+        }
+        
+        // Add to the list
+        customCategories.push(normalizedCategory);
+        
+        // Update household document
+        await setDoc(doc(db, 'households', householdId), {
+          customCategories: customCategories
+        }, { merge: true });
+        
+        return normalizedCategory;
+      } catch (error) {
+        console.error('Error adding custom category:', error);
+        throw error;
+      }
+    }
+
+    // Populate category dropdowns with custom categories
+    async function populateCategoryDropdowns(householdId) {
+      const customCategories = await loadCustomCategories(householdId);
+      
+      // Update transaction category dropdown
+      const transactionSelect = document.getElementById('transaction-category');
+      const billSelect = document.getElementById('bill-category');
+      
+      // Remove old custom categories
+      const transactionOptions = transactionSelect.querySelectorAll('option[data-custom="true"]');
+      transactionOptions.forEach(opt => opt.remove());
+      
+      const billOptions = billSelect.querySelectorAll('option[data-custom="true"]');
+      billOptions.forEach(opt => opt.remove());
+      
+      // Add custom categories before the "Add Custom" option
+      const customOption = transactionSelect.querySelector('option[value="__custom__"]');
+      customCategories.forEach(category => {
+        const option = document.createElement('option');
+        option.value = category;
+        option.textContent = category.charAt(0).toUpperCase() + category.slice(1);
+        option.setAttribute('data-custom', 'true');
+        transactionSelect.insertBefore(option, customOption);
+      });
+      
+      const billCustomOption = billSelect.querySelector('option[value="__custom__"]');
+      customCategories.forEach(category => {
+        const option = document.createElement('option');
+        option.value = category;
+        option.textContent = category.charAt(0).toUpperCase() + category.slice(1);
+        option.setAttribute('data-custom', 'true');
+        billSelect.insertBefore(option, billCustomOption);
+      });
+    }
+
+    // Handle transaction category selection
+    document.getElementById('transaction-category').addEventListener('change', function() {
+      const customInput = document.getElementById('custom-transaction-category');
+      if (this.value === '__custom__') {
+        customInput.style.display = 'block';
+        customInput.focus();
+      } else {
+        customInput.style.display = 'none';
+        customInput.value = '';
+      }
+    });
+
+    // Handle bill category selection
+    document.getElementById('bill-category').addEventListener('change', function() {
+      const customInput = document.getElementById('custom-bill-category');
+      if (this.value === '__custom__') {
+        customInput.style.display = 'block';
+        customInput.focus();
+      } else {
+        customInput.style.display = 'none';
+        customInput.value = '';
+      }
+    });
+
+    // Handle bill frequency change
+    document.getElementById('bill-frequency').addEventListener('change', function() {
+      const container = document.getElementById('bill-schedule-inputs');
+      const frequency = this.value;
+
+      if (frequency === 'monthly') {
+        container.innerHTML = '<input type="number" id="bill-day" placeholder="Day of month (1-31)" min="1" max="31" required>';
+      } else if (frequency === 'weekly') {
+        container.innerHTML = `
+          <select id="bill-day-of-week" required style="margin: 0;">
+            <option value="">Select day of week</option>
+            <option value="0">Sunday</option>
+            <option value="1">Monday</option>
+            <option value="2">Tuesday</option>
+            <option value="3">Wednesday</option>
+            <option value="4">Thursday</option>
+            <option value="5">Friday</option>
+            <option value="6">Saturday</option>
+          </select>
+        `;
+      } else if (frequency === 'biweekly') {
+        container.innerHTML = `
+          <input type="date" id="bill-start-date" placeholder="First occurrence" required style="margin: 0;">
+          <p style="font-size: 12px; color: #666; margin: 5px 0 0 0;">Bill will repeat every 2 weeks from this date</p>
+        `;
+      } else if (frequency === 'bimonthly') {
+        container.innerHTML = `
+          <input type="number" id="bill-day" placeholder="Day of month (1-31)" min="1" max="31" required style="margin: 0;">
+          <select id="bill-start-month" required style="margin: 8px 0 0 0;">
+            <option value="">Select starting month</option>
+            <option value="0">January</option>
+            <option value="1">February</option>
+            <option value="2">March</option>
+            <option value="3">April</option>
+            <option value="4">May</option>
+            <option value="5">June</option>
+            <option value="6">July</option>
+            <option value="7">August</option>
+            <option value="8">September</option>
+            <option value="9">October</option>
+            <option value="10">November</option>
+            <option value="11">December</option>
+          </select>
+          <p style="font-size: 12px; color: #666; margin: 5px 0 0 0;">Bill will repeat every 2 months (Jan/Mar/May or Feb/Apr/Jun, etc.)</p>
+        `;
+      }
+    });
+
+    // Load household data
+    async function loadHouseholdData(householdId) {
+      try {
+        const householdDoc = await getDoc(doc(db, 'households', householdId));
+        if (householdDoc.exists()) {
+          return householdDoc.data();
+        }
+        return null;
+      } catch (error) {
+        console.error('Error loading household:', error);
+        return null;
+      }
+    }
+
+    // Set today's date as default
+    document.getElementById('transaction-date').valueAsDate = new Date();
+
+    // Add transaction
+    document.getElementById('add-transaction-btn').addEventListener('click', async () => {
+      const type = document.getElementById('transaction-type').value;
+      const amount = document.getElementById('transaction-amount').value;
+      let category = document.getElementById('transaction-category').value;
+      const customCategory = document.getElementById('custom-transaction-category').value.trim();
+      const description = document.getElementById('transaction-description').value;
+      const date = document.getElementById('transaction-date').value;
+      const errorDiv = document.getElementById('transaction-error');
+      errorDiv.textContent = '';
+
+      // Handle custom category
+      if (category === '__custom__') {
+        if (!customCategory) {
+          errorDiv.textContent = 'Please enter a custom category name';
+          return;
+        }
+        category = customCategory.toLowerCase();
+      }
+
+      if (!amount || !category || !date) {
+        errorDiv.textContent = 'Please fill in all required fields';
+        return;
+      }
+
+      if (parseFloat(amount) <= 0) {
+        errorDiv.textContent = 'Amount must be greater than 0';
+        return;
+      }
+
+      try {
+        const user = auth.currentUser;
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        const householdId = userDoc.data().householdId;
+
+        // If custom category, add it to household
+        if (customCategory) {
+          category = await addCustomCategory(householdId, customCategory);
+          await populateCategoryDropdowns(householdId);
+          await renderCategorySettings(householdId);
+        }
+
+        const transactionData = {
+          householdId: householdId,
+          userId: user.uid,
+          type: type,
+          amount: parseFloat(amount),
+          category: category,
+          description: description,
+          date: date,
+          createdAt: new Date().toISOString()
+        };
+
+        await addDoc(collection(db, 'transactions'), transactionData);
+
+        document.getElementById('transaction-amount').value = '';
+        document.getElementById('transaction-category').value = '';
+        document.getElementById('custom-transaction-category').value = '';
+        document.getElementById('custom-transaction-category').style.display = 'none';
+        document.getElementById('transaction-description').value = '';
+        document.getElementById('transaction-date').valueAsDate = new Date();
+
+        await loadTransactions(householdId);
+        const currentMonth = new Date().toISOString().substring(0, 7);
+        await loadCategorySpending(householdId, currentMonth);
+        await updateBudgetDisplay(householdId, currentMonth);
+        await updateDashboard(householdId, currentMonth);
+      } catch (error) {
+        errorDiv.textContent = 'Error adding transaction: ' + error.message;
+        console.error('Error:', error);
+      }
+    });
+
+    // Load transactions
+    let allTransactionsCache = []; // Cache all transactions for client-side filtering
+
+    async function loadTransactions(householdId) {
+      try {
+        const q = query(
+          collection(db, 'transactions'),
+          where('householdId', '==', householdId)
+        );
+
+        const querySnapshot = await getDocs(q);
+
+        // Build and cache full list
+        allTransactionsCache = [];
+        querySnapshot.forEach((doc) => {
+          allTransactionsCache.push({ id: doc.id, ...doc.data() });
+        });
+
+        // Sort by date descending
+        allTransactionsCache.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        // Populate category filter dropdown from actual transaction data
+        const categoryFilter = document.getElementById('filter-category');
+        const currentFilterVal = categoryFilter.value;
+        const categories = [...new Set(allTransactionsCache.map(t => t.category))].sort();
+        categoryFilter.innerHTML = '<option value="">All Categories</option>';
+        categories.forEach(cat => {
+          const opt = document.createElement('option');
+          opt.value = cat;
+          opt.textContent = cat.charAt(0).toUpperCase() + cat.slice(1);
+          if (cat === currentFilterVal) opt.selected = true;
+          categoryFilter.appendChild(opt);
+        });
+
+        renderTransactions();
+      } catch (error) {
+        console.error('Error loading transactions:', error);
+        document.getElementById('transactions-list').innerHTML =
+          '<p style="text-align: center; color: #dc3545;">Error loading transactions.</p>';
+      }
+    }
+
+    function renderTransactions() {
+      const categoryFilter = document.getElementById('filter-category').value;
+      const typeFilter = document.getElementById('filter-type').value;
+      const transactionsList = document.getElementById('transactions-list');
+      transactionsList.innerHTML = '';
+
+      let filtered = allTransactionsCache;
+      if (categoryFilter) filtered = filtered.filter(t => t.category === categoryFilter);
+      if (typeFilter) filtered = filtered.filter(t => t.type === typeFilter);
+
+      if (filtered.length === 0) {
+        transactionsList.innerHTML = '<p style="text-align: center; color: #666;">No transactions match your filters</p>';
+        return;
+      }
+
+      // Show count
+      const countDiv = document.createElement('p');
+      countDiv.style.cssText = 'font-size: 12px; color: #999; margin: 0 0 10px 0;';
+      countDiv.textContent = `Showing ${Math.min(filtered.length, 50)} of ${filtered.length} transaction${filtered.length !== 1 ? 's' : ''}`;
+      transactionsList.appendChild(countDiv);
+
+      filtered.slice(0, 50).forEach((transaction) => {
+        const div = document.createElement('div');
+        div.className = `transaction-item ${transaction.type}`;
+
+        const sign = transaction.type === 'income' ? '+' : transaction.type === 'savings' ? '' : '-';
+        const formattedDate = new Date(transaction.date + 'T00:00:00').toLocaleDateString();
+
+        div.innerHTML = `
+          <div class="transaction-details">
+            <div class="transaction-category" style="text-transform: capitalize;">${transaction.category}</div>
+            <div class="transaction-date">${formattedDate}${transaction.description ? ' • ' + transaction.description : ''}</div>
+          </div>
+          <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 5px;">
+            <div class="transaction-amount ${transaction.type}">${sign}$${transaction.amount.toFixed(2)}</div>
+            <div style="display: flex; gap: 5px;">
+              <button class="delete-btn" style="background: #667eea; font-size: 11px; padding: 4px 8px;" onclick="editTransaction('${transaction.id}', '${transaction.type}', ${transaction.amount}, '${transaction.category}', '${(transaction.description || '').replace(/'/g, "\\'")}', '${transaction.date}')">Edit</button>
+              <button class="delete-btn" style="font-size: 11px; padding: 4px 8px;" onclick="deleteTransaction('${transaction.id}')">Delete</button>
+            </div>
+          </div>
+        `;
+
+        transactionsList.appendChild(div);
+      });
+    }
+
+    // Wire up filter dropdowns
+    document.getElementById('filter-category').addEventListener('change', renderTransactions);
+    document.getElementById('filter-type').addEventListener('change', renderTransactions);
+
+    // Delete transaction
+    window.deleteTransaction = async function(transactionId) {
+      if (!confirm('Delete this transaction?')) return;
+
+      try {
+        await deleteDoc(doc(db, 'transactions', transactionId));
+
+        const user = auth.currentUser;
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        const householdId = userDoc.data().householdId;
+
+        await loadTransactions(householdId);
+        const currentMonth = new Date().toISOString().substring(0, 7);
+        await loadCategorySpending(householdId, currentMonth);
+        await updateBudgetDisplay(householdId, currentMonth);
+        await updateDashboard(householdId, currentMonth);
+      } catch (error) {
+        console.error('Error deleting transaction:', error);
+      }
+    };
+
+    // Edit transaction
+    let currentEditingTransactionId = null;
+
+    window.editTransaction = async function(transactionId, type, amount, category, description, date) {
+      currentEditingTransactionId = transactionId;
+
+      // Load custom categories FIRST before setting values
+      const user = auth.currentUser;
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      const householdId = userDoc.data().householdId;
+      await populateEditTransactionCategories(householdId);
+
+      // NOW populate fields so custom category is already in the dropdown
+      document.getElementById('edit-transaction-type').value = type;
+      document.getElementById('edit-transaction-amount').value = amount;
+      document.getElementById('edit-transaction-category').value = category;
+      document.getElementById('edit-transaction-description').value = description;
+      document.getElementById('edit-transaction-date').value = date;
+
+      // If the category still isn't selected (wasn't in dropdown), it must be unrecognized
+      const select = document.getElementById('edit-transaction-category');
+      if (select.value !== category) {
+        console.warn('Category not found in dropdown:', category);
+      }
+
+      // Show modal
+      document.getElementById('edit-transaction-modal').classList.add('active');
+    };
+
+    window.closeEditTransactionModal = function() {
+      document.getElementById('edit-transaction-modal').classList.remove('active');
+      document.getElementById('edit-transaction-error').textContent = '';
+      document.getElementById('edit-custom-transaction-category').style.display = 'none';
+      currentEditingTransactionId = null;
+    };
+
+    // Handle edit transaction category change
+    document.getElementById('edit-transaction-category').addEventListener('change', function() {
+      const customInput = document.getElementById('edit-custom-transaction-category');
+      if (this.value === '__custom__') {
+        customInput.style.display = 'block';
+        customInput.focus();
+      } else {
+        customInput.style.display = 'none';
+        customInput.value = '';
+      }
+    });
+
+    // Populate edit modal with custom categories
+    async function populateEditTransactionCategories(householdId) {
+      const customCategories = await loadCustomCategories(householdId);
+      const select = document.getElementById('edit-transaction-category');
+      
+      // Remove old custom categories
+      const options = select.querySelectorAll('option[data-custom="true"]');
+      options.forEach(opt => opt.remove());
+      
+      // Add custom categories before "Add Custom" option
+      const customOption = select.querySelector('option[value="__custom__"]');
+      customCategories.forEach(category => {
+        const option = document.createElement('option');
+        option.value = category;
+        option.textContent = category.charAt(0).toUpperCase() + category.slice(1);
+        option.setAttribute('data-custom', 'true');
+        select.insertBefore(option, customOption);
+      });
+    }
+
+    // Save edited transaction
+    document.getElementById('save-transaction-btn').addEventListener('click', async () => {
+      if (!currentEditingTransactionId) return;
+
+      const type = document.getElementById('edit-transaction-type').value;
+      const amount = document.getElementById('edit-transaction-amount').value;
+      let category = document.getElementById('edit-transaction-category').value;
+      const customCategory = document.getElementById('edit-custom-transaction-category').value.trim();
+      const description = document.getElementById('edit-transaction-description').value;
+      const date = document.getElementById('edit-transaction-date').value;
+      const errorDiv = document.getElementById('edit-transaction-error');
+      errorDiv.textContent = '';
+
+      // Handle custom category
+      if (category === '__custom__') {
+        if (!customCategory) {
+          errorDiv.textContent = 'Please enter a custom category name';
+          return;
+        }
+        category = customCategory.toLowerCase();
+      }
+
+      if (!amount || !category || !date) {
+        errorDiv.textContent = 'Please fill in all required fields';
+        return;
+      }
+
+      if (parseFloat(amount) <= 0) {
+        errorDiv.textContent = 'Amount must be greater than 0';
+        return;
+      }
+
+      try {
+        const user = auth.currentUser;
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        const householdId = userDoc.data().householdId;
+
+        // If custom category, add it to household
+        if (customCategory) {
+          category = await addCustomCategory(householdId, customCategory);
+          await populateCategoryDropdowns(householdId);
+          await populateEditTransactionCategories(householdId);
+        }
+
+        const transactionData = {
+          householdId: householdId,
+          userId: user.uid,
+          type: type,
+          amount: parseFloat(amount),
+          category: category,
+          description: description,
+          date: date,
+          updatedAt: new Date().toISOString()
+        };
+
+        await setDoc(doc(db, 'transactions', currentEditingTransactionId), transactionData, { merge: true });
+
+        closeEditTransactionModal();
+
+        await loadTransactions(householdId);
+        const currentMonth = new Date().toISOString().substring(0, 7);
+        await loadCategorySpending(householdId, currentMonth);
+        await updateBudgetDisplay(householdId, currentMonth);
+        await updateDashboard(householdId, currentMonth);
+      } catch (error) {
+        errorDiv.textContent = 'Error updating transaction: ' + error.message;
+        console.error('Error:', error);
+      }
+    });
+
+    // Load category spending
+    let categoryPieChart = null;
+    let categoryTransactionMap = {}; // Store transactions per category for drilldown
+
+    async function loadCategorySpending(householdId, yearMonth) {
+      try {
+        const q = query(
+          collection(db, 'transactions'),
+          where('householdId', '==', householdId)
+        );
+
+        const querySnapshot = await getDocs(q);
+
+        const categoryTotals = {};
+        categoryTransactionMap = {}; // Reset
+        let totalExpenses = 0;
+
+        querySnapshot.forEach((doc) => {
+          const transaction = doc.data();
+          // Robust month check - handle both "2026-02-05" and "2026-2-5" formats
+          const txDate = new Date(transaction.date + 'T00:00:00');
+          const txMonth = `${txDate.getFullYear()}-${String(txDate.getMonth() + 1).padStart(2, '0')}`;
+
+          if (txMonth === yearMonth && transaction.type === 'expense') {
+            if (!categoryTotals[transaction.category]) {
+              categoryTotals[transaction.category] = 0;
+              categoryTransactionMap[transaction.category] = [];
+            }
+            categoryTotals[transaction.category] += transaction.amount;
+            categoryTransactionMap[transaction.category].push({ id: doc.id, ...transaction });
+            totalExpenses += transaction.amount;
+          }
+        });
+
+        // Sort each category's transactions by date descending
+        Object.keys(categoryTransactionMap).forEach(cat => {
+          categoryTransactionMap[cat].sort((a, b) => new Date(b.date) - new Date(a.date));
+        });
+
+        const chartDiv = document.getElementById('category-chart');
+        const pieCanvas = document.getElementById('category-pie-chart');
+        chartDiv.innerHTML = '';
+
+        if (totalExpenses === 0) {
+          chartDiv.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">No expenses this month</p>';
+          pieCanvas.style.display = 'none';
+          if (categoryPieChart) {
+            categoryPieChart.destroy();
+            categoryPieChart = null;
+          }
+          return;
+        }
+
+        pieCanvas.style.display = 'block';
+
+        const colors = [
+          '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
+          '#FF9F40', '#C9CBCF', '#7BC8A4', '#E8A838', '#A66CFF'
+        ];
+
+        const sortedCategories = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1]);
+        const labels = sortedCategories.map(([category]) => category);
+        const data = sortedCategories.map(([, amount]) => amount);
+        const backgroundColors = sortedCategories.map((_, index) => colors[index % colors.length]);
+
+        // Destroy previous chart if it exists
+        if (categoryPieChart) {
+          categoryPieChart.destroy();
+        }
+
+        // Create pie chart - slices are clickable
+        const ctx = pieCanvas.getContext('2d');
+        categoryPieChart = new Chart(ctx, {
+          type: 'pie',
+          data: {
+            labels: labels,
+            datasets: [{
+              data: data,
+              backgroundColor: backgroundColors,
+              borderWidth: 2,
+              borderColor: '#fff',
+              hoverBorderWidth: 3,
+              hoverOffset: 6
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    const value = context.parsed || 0;
+                    const percentage = ((value / totalExpenses) * 100).toFixed(1);
+                    return ` $${value.toFixed(2)} (${percentage}%) — click to view`;
+                  }
+                }
+              }
+            },
+            onClick: function(event, elements) {
+              if (elements.length > 0) {
+                const index = elements[0].index;
+                const category = labels[index];
+                const color = backgroundColors[index];
+                openCategoryModal(category, color, totalExpenses);
+              }
+            },
+            onHover: function(event, elements) {
+              event.native.target.style.cursor = elements.length > 0 ? 'pointer' : 'default';
+            }
+          }
+        });
+
+        // Create clickable legend below chart
+        sortedCategories.forEach(([category, amount], index) => {
+          const percentage = (amount / totalExpenses) * 100;
+          const color = colors[index % colors.length];
+          const txCount = categoryTransactionMap[category]?.length || 0;
+
+          const legendItem = document.createElement('div');
+          legendItem.className = 'legend-item';
+          legendItem.title = `Click to view ${txCount} transaction${txCount !== 1 ? 's' : ''}`;
+          legendItem.onclick = () => openCategoryModal(category, color, totalExpenses);
+          legendItem.innerHTML = `
+            <div style="display: flex; align-items: center;">
+              <div class="legend-color" style="background: ${color};"></div>
+              <span class="legend-label">${category}</span>
+              <span style="font-size: 11px; color: #999; margin-left: 6px;">(${txCount})</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span class="legend-amount">$${amount.toFixed(2)}</span>
+              <span class="legend-percentage">${percentage.toFixed(1)}%</span>
+              <span style="color: #667eea; font-size: 13px;">›</span>
+            </div>
+          `;
+
+          chartDiv.appendChild(legendItem);
+        });
+      } catch (error) {
+        console.error('Error loading category spending:', error);
+      }
+    }
+
+    // Open category drilldown modal
+    function openCategoryModal(category, color, totalExpenses) {
+      currentDrilldownCategory = category;
+      const transactions = categoryTransactionMap[category] || [];
+      const total = transactions.reduce((sum, t) => sum + t.amount, 0);
+      const pct = totalExpenses > 0 ? ((total / totalExpenses) * 100).toFixed(1) : '0';
+
+      document.getElementById('category-modal-title').textContent = category;
+      document.getElementById('category-modal-color').style.background = color;
+      document.getElementById('category-modal-total').textContent = `$${total.toFixed(2)}`;
+      document.getElementById('category-modal-count').textContent = transactions.length;
+      document.getElementById('category-modal-pct').textContent = `${pct}%`;
+
+      const listDiv = document.getElementById('category-modal-transactions');
+      listDiv.innerHTML = '';
+
+      if (transactions.length === 0) {
+        listDiv.innerHTML = '<p style="text-align: center; color: #666;">No transactions found</p>';
+      } else {
+        transactions.forEach(transaction => {
+          const div = document.createElement('div');
+          div.className = 'transaction-item expense';
+          div.style.marginBottom = '8px';
+          const formattedDate = new Date(transaction.date).toLocaleDateString();
+          div.innerHTML = `
+            <div class="transaction-details">
+              <div style="font-weight: 600; font-size: 14px;">${transaction.description || category}</div>
+              <div class="transaction-date">${formattedDate}</div>
+            </div>
+            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+              <div class="transaction-amount expense">-$${transaction.amount.toFixed(2)}</div>
+              <div style="display: flex; gap: 4px;">
+                <button class="delete-btn" style="background: #667eea; font-size: 11px; padding: 3px 7px;" 
+                  onclick="closeCategoryModal(); editTransaction('${transaction.id}', '${transaction.type}', ${transaction.amount}, '${transaction.category}', '${(transaction.description || '').replace(/'/g, "\\'")}', '${transaction.date}')">Edit</button>
+                <button class="delete-btn" style="font-size: 11px; padding: 3px 7px;"
+                  onclick="closeCategoryModal(); deleteTransaction('${transaction.id}')">Delete</button>
+              </div>
+            </div>
+          `;
+          listDiv.appendChild(div);
+        });
+      }
+
+      document.getElementById('category-drilldown-modal').classList.add('active');
+    }
+
+    window.closeCategoryModal = function() {
+      document.getElementById('category-drilldown-modal').classList.remove('active');
+    };
+
+    // Open group modal (fixed bills or discretionary)
+    window.openGroupModal = function(group) {
+      const isFixed = group === 'fixed';
+      const groupData = dashboardGroupCache[group];
+      const color = isFixed ? '#dc3545' : '#FF9F40';
+      const title = isFixed ? 'Fixed Bills' : 'Discretionary';
+
+      // Calculate totals
+      let total = 0;
+      let txCount = 0;
+      Object.values(groupData).forEach(txList => {
+        txList.forEach(t => { total += t.amount; txCount++; });
+      });
+
+      document.getElementById('category-modal-title').textContent = title;
+      document.getElementById('category-modal-color').style.background = color;
+      document.getElementById('category-modal-total').textContent = `$${total.toFixed(2)}`;
+      document.getElementById('category-modal-count').textContent = txCount;
+      document.getElementById('category-modal-pct').textContent = '';
+
+      const listDiv = document.getElementById('category-modal-transactions');
+      listDiv.innerHTML = '';
+
+      const categories = Object.keys(groupData);
+      if (categories.length === 0) {
+        listDiv.innerHTML = '<p style="text-align: center; color: #666;">No transactions this month</p>';
+      } else {
+        // Group by category with a header for each
+        categories
+          .sort((a, b) => {
+            const aTotal = groupData[a].reduce((s, t) => s + t.amount, 0);
+            const bTotal = groupData[b].reduce((s, t) => s + t.amount, 0);
+            return bTotal - aTotal;
+          })
+          .forEach(category => {
+            const txList = groupData[category];
+            const catTotal = txList.reduce((s, t) => s + t.amount, 0);
+
+            // Category header
+            const header = document.createElement('div');
+            header.style.cssText = `
+              display: flex; justify-content: space-between; align-items: center;
+              background: #f5f5f5; border-radius: 8px; padding: 8px 12px;
+              margin: 12px 0 6px 0; font-weight: 700; font-size: 14px;
+              text-transform: capitalize;
+            `;
+            header.innerHTML = `
+              <span style="display: flex; align-items: center; gap: 8px;">
+                <span style="width: 10px; height: 10px; border-radius: 50%; background: ${color}; display: inline-block;"></span>
+                ${category}
+              </span>
+              <span style="color: ${color};">$${catTotal.toFixed(2)}</span>
+            `;
+            listDiv.appendChild(header);
+
+            // Transactions under this category
+            txList.forEach(transaction => {
+              const div = document.createElement('div');
+              div.className = 'transaction-item expense';
+              div.style.marginBottom = '6px';
+              const formattedDate = new Date(transaction.date + 'T00:00:00').toLocaleDateString();
+              div.innerHTML = `
+                <div class="transaction-details">
+                  <div style="font-weight: 600; font-size: 14px;">${transaction.description || category}</div>
+                  <div class="transaction-date">${formattedDate}</div>
+                </div>
+                <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+                  <div class="transaction-amount expense">-$${transaction.amount.toFixed(2)}</div>
+                  <div style="display: flex; gap: 4px;">
+                    <button class="delete-btn" style="background: #667eea; font-size: 11px; padding: 3px 7px;"
+                      onclick="closeCategoryModal(); editTransaction('${transaction.id}', '${transaction.type}', ${transaction.amount}, '${transaction.category}', '${(transaction.description || '').replace(/'/g, "\\'")}', '${transaction.date}')">Edit</button>
+                    <button class="delete-btn" style="font-size: 11px; padding: 3px 7px;"
+                      onclick="closeCategoryModal(); deleteTransaction('${transaction.id}')">Delete</button>
+                  </div>
+                </div>
+              `;
+              listDiv.appendChild(div);
+            });
+          });
+      }
+
+      // Hide "View in Transactions" for group modal — use type filter instead
+      currentDrilldownCategory = null;
+      document.getElementById('category-drilldown-modal').classList.add('active');
+    };
+
+    // Open savings modal
+    window.openSavingsModal = function() {
+      const savingsData = dashboardGroupCache.savings || {};
+      const color = '#667eea';
+      const title = 'Savings';
+
+      // Calculate totals
+      let total = 0;
+      let txCount = 0;
+      Object.values(savingsData).forEach(txList => {
+        txList.forEach(t => { total += t.amount; txCount++; });
+      });
+
+      document.getElementById('category-modal-title').textContent = title;
+      document.getElementById('category-modal-color').style.background = color;
+      document.getElementById('category-modal-total').textContent = `$${total.toFixed(2)}`;
+      document.getElementById('category-modal-count').textContent = txCount;
+      document.getElementById('category-modal-pct').textContent = '';
+
+      const listDiv = document.getElementById('category-modal-transactions');
+      listDiv.innerHTML = '';
+
+      const categories = Object.keys(savingsData);
+      if (categories.length === 0) {
+        listDiv.innerHTML = '<p style="text-align: center; color: #666;">No savings transactions this month</p>';
+      } else {
+        // Group by category with a header for each
+        categories
+          .sort((a, b) => {
+            const aTotal = savingsData[a].reduce((s, t) => s + t.amount, 0);
+            const bTotal = savingsData[b].reduce((s, t) => s + t.amount, 0);
+            return bTotal - aTotal;
+          })
+          .forEach(category => {
+            const txList = savingsData[category];
+            const catTotal = txList.reduce((s, t) => s + t.amount, 0);
+
+            // Category header
+            const header = document.createElement('div');
+            header.style.cssText = `
+              display: flex; justify-content: space-between; align-items: center;
+              background: #f5f5f5; border-radius: 8px; padding: 8px 12px;
+              margin: 12px 0 6px 0; font-weight: 700; font-size: 14px;
+              text-transform: capitalize;
+            `;
+            header.innerHTML = `
+              <span style="display: flex; align-items: center; gap: 8px;">
+                <span style="width: 10px; height: 10px; border-radius: 50%; background: ${color}; display: inline-block;"></span>
+                ${category}
+              </span>
+              <span style="color: ${color};">$${catTotal.toFixed(2)}</span>
+            `;
+            listDiv.appendChild(header);
+
+            // Transactions under this category
+            txList.forEach(transaction => {
+              const div = document.createElement('div');
+              div.className = 'transaction-item savings';
+              div.style.marginBottom = '6px';
+              const formattedDate = new Date(transaction.date + 'T00:00:00').toLocaleDateString();
+              div.innerHTML = `
+                <div class="transaction-details">
+                  <div style="font-weight: 600; font-size: 14px;">${transaction.description || category}</div>
+                  <div class="transaction-date">${formattedDate}</div>
+                </div>
+                <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+                  <div class="transaction-amount savings">$${transaction.amount.toFixed(2)}</div>
+                  <div style="display: flex; gap: 4px;">
+                    <button class="delete-btn" style="background: #667eea; font-size: 11px; padding: 3px 7px;"
+                      onclick="closeCategoryModal(); editTransaction('${transaction.id}', '${transaction.type}', ${transaction.amount}, '${transaction.category}', '${(transaction.description || '').replace(/'/g, "\\'")}', '${transaction.date}')">Edit</button>
+                    <button class="delete-btn" style="font-size: 11px; padding: 3px 7px;"
+                      onclick="closeCategoryModal(); deleteTransaction('${transaction.id}')">Delete</button>
+                  </div>
+                </div>
+              `;
+              listDiv.appendChild(div);
+            });
+          });
+      }
+
+      // Hide "View in Transactions" for savings modal
+      currentDrilldownCategory = null;
+      document.getElementById('category-drilldown-modal').classList.add('active');
+    };
+
+    let currentDrilldownCategory = null;
+
+    window.viewCategoryInTransactions = function() {
+      closeCategoryModal();
+      // Switch to transactions tab
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.getElementById('transactions').classList.add('active');
+      document.querySelectorAll('.tab')[1].classList.add('active');
+      // Apply category filter if from category drilldown, otherwise just show expenses
+      if (currentDrilldownCategory) {
+        document.getElementById('filter-category').value = currentDrilldownCategory;
+        document.getElementById('filter-type').value = 'expense';
+      } else {
+        document.getElementById('filter-category').value = '';
+        document.getElementById('filter-type').value = 'expense';
+      }
+      renderTransactions();
+    };
+
+    // Add recurring bill
+    document.getElementById('add-bill-btn').addEventListener('click', async () => {
+      const name = document.getElementById('bill-name').value;
+      const amount = document.getElementById('bill-amount').value;
+      let category = document.getElementById('bill-category').value;
+      const customCategory = document.getElementById('custom-bill-category').value.trim();
+      const frequency = document.getElementById('bill-frequency').value;
+      const errorDiv = document.getElementById('bill-error');
+      errorDiv.textContent = '';
+
+      // Handle custom category
+      if (category === '__custom__') {
+        if (!customCategory) {
+          errorDiv.textContent = 'Please enter a custom category name';
+          return;
+        }
+        category = customCategory.toLowerCase();
+      }
+
+      // Validate based on frequency
+      let scheduleData = {};
+      if (frequency === 'monthly') {
+        const dayOfMonth = document.getElementById('bill-day')?.value;
+        if (!dayOfMonth) {
+          errorDiv.textContent = 'Please enter a day of month';
+          return;
+        }
+        const day = parseInt(dayOfMonth);
+        if (day < 1 || day > 31) {
+          errorDiv.textContent = 'Day must be between 1 and 31';
+          return;
+        }
+        scheduleData = { dayOfMonth: day };
+      } else if (frequency === 'weekly') {
+        const dayOfWeek = document.getElementById('bill-day-of-week')?.value;
+        if (dayOfWeek === '' || dayOfWeek === undefined) {
+          errorDiv.textContent = 'Please select a day of week';
+          return;
+        }
+        scheduleData = { dayOfWeek: parseInt(dayOfWeek) };
+      } else if (frequency === 'biweekly') {
+        const startDate = document.getElementById('bill-start-date')?.value;
+        if (!startDate) {
+          errorDiv.textContent = 'Please select a start date';
+          return;
+        }
+        scheduleData = { startDate: startDate };
+      } else if (frequency === 'bimonthly') {
+        const dayOfMonth = document.getElementById('bill-day')?.value;
+        const startMonth = document.getElementById('bill-start-month')?.value;
+        if (!dayOfMonth) {
+          errorDiv.textContent = 'Please enter a day of month';
+          return;
+        }
+        if (startMonth === '' || startMonth === undefined) {
+          errorDiv.textContent = 'Please select a starting month';
+          return;
+        }
+        const day = parseInt(dayOfMonth);
+        if (day < 1 || day > 31) {
+          errorDiv.textContent = 'Day must be between 1 and 31';
+          return;
+        }
+        scheduleData = { dayOfMonth: day, startMonth: parseInt(startMonth) };
+      }
+
+      if (!name || !amount || !category) {
+        errorDiv.textContent = 'Please fill in all fields';
+        return;
+      }
+
+      if (parseFloat(amount) <= 0) {
+        errorDiv.textContent = 'Amount must be greater than 0';
+        return;
+      }
+
+      try {
+        const user = auth.currentUser;
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        const householdId = userDoc.data().householdId;
+
+        // If custom category, add it to household
+        if (customCategory) {
+          category = await addCustomCategory(householdId, customCategory);
+          await populateCategoryDropdowns(householdId);
+          await renderCategorySettings(householdId);
+        }
+
+        const billData = {
+          householdId: householdId,
+          name: name,
+          amount: parseFloat(amount),
+          category: category,
+          frequency: frequency,
+          ...scheduleData,
+          createdBy: user.uid,
+          createdAt: new Date().toISOString()
+        };
+
+        await addDoc(collection(db, 'recurringBills'), billData);
+
+        document.getElementById('bill-name').value = '';
+        document.getElementById('bill-amount').value = '';
+        document.getElementById('bill-category').value = '';
+        document.getElementById('custom-bill-category').value = '';
+        document.getElementById('custom-bill-category').style.display = 'none';
+        document.getElementById('bill-frequency').value = 'monthly';
+        // Reset schedule inputs
+        document.getElementById('bill-schedule-inputs').innerHTML = '<input type="number" id="bill-day" placeholder="Day of month (1-31)" min="1" max="31" required>';
+
+        await loadRecurringBills(householdId);
+        await autoCreateRecurringBills(householdId);
+        const currentMonth = new Date().toISOString().substring(0, 7);
+        await updateDashboard(householdId, currentMonth);
+      } catch (error) {
+        errorDiv.textContent = 'Error adding bill: ' + error.message;
+        console.error('Error:', error);
+      }
+    });
+
+    // Load recurring bills
+    async function loadRecurringBills(householdId) {
+      try {
+        const q = query(
+          collection(db, 'recurringBills'),
+          where('householdId', '==', householdId)
+        );
+
+        const querySnapshot = await getDocs(q);
+        const billsList = document.getElementById('recurring-bills-list');
+        billsList.innerHTML = '';
+
+        if (querySnapshot.empty) {
+          billsList.innerHTML = '<p style="text-align: center; color: #666;">No recurring bills yet</p>';
+          return;
+        }
+
+        const today = new Date();
+
+        querySnapshot.forEach((doc) => {
+          const bill = doc.data();
+          const div = document.createElement('div');
+          div.className = 'bill-item';
+
+          // Calculate due text based on frequency
+          let dueText = '';
+          let daysUntilDue = 999;
+          const frequency = bill.frequency || 'monthly'; // default to monthly for old bills
+
+          if (frequency === 'monthly') {
+            const currentDay = today.getDate();
+            daysUntilDue = bill.dayOfMonth - currentDay;
+            
+            if (daysUntilDue < 0) {
+              dueText = 'Next month';
+            } else if (daysUntilDue === 0) {
+              dueText = 'Due today';
+              div.classList.add('due-soon');
+            } else if (daysUntilDue <= 7) {
+              dueText = `Due in ${daysUntilDue} day${daysUntilDue > 1 ? 's' : ''}`;
+              div.classList.add('due-soon');
+            } else {
+              dueText = `Due on day ${bill.dayOfMonth}`;
+            }
+          } else if (frequency === 'weekly') {
+            const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            const targetDay = bill.dayOfWeek;
+            const todayDay = today.getDay();
+            daysUntilDue = (targetDay - todayDay + 7) % 7;
+            if (daysUntilDue === 0) daysUntilDue = 7; // Next week if today
+            
+            if (daysUntilDue <= 1) {
+              dueText = daysUntilDue === 0 ? 'Due today' : 'Due tomorrow';
+              div.classList.add('due-soon');
+            } else if (daysUntilDue <= 7) {
+              dueText = `Due ${dayNames[targetDay]}`;
+              div.classList.add('due-soon');
+            } else {
+              dueText = `Every ${dayNames[targetDay]}`;
+            }
+          } else if (frequency === 'biweekly') {
+            const startDate = new Date(bill.startDate);
+            const daysSinceStart = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
+            const cyclesSinceStart = Math.floor(daysSinceStart / 14);
+            const nextOccurrence = new Date(startDate);
+            nextOccurrence.setDate(nextOccurrence.getDate() + (cyclesSinceStart + 1) * 14);
+            daysUntilDue = Math.floor((nextOccurrence - today) / (1000 * 60 * 60 * 24));
+            
+            if (daysUntilDue === 0) {
+              dueText = 'Due today';
+              div.classList.add('due-soon');
+            } else if (daysUntilDue <= 7) {
+              dueText = `Due in ${daysUntilDue} day${daysUntilDue > 1 ? 's' : ''}`;
+              div.classList.add('due-soon');
+            } else {
+              dueText = `Due ${nextOccurrence.toLocaleDateString()}`;
+            }
+          } else if (frequency === 'bimonthly') {
+            // Occurs every 2 months on the specified day
+            const currentMonth = today.getMonth();
+            const currentDay = today.getDate();
+            const startMonth = bill.startMonth;
+            
+            // Determine if this month or next occurrence
+            let occurrenceMonth = currentMonth;
+            let occurrenceYear = today.getFullYear();
+            
+            // Check if current month is a billing month
+            const monthsSinceStart = (currentMonth - startMonth + 12) % 12;
+            const isThisMonthBillingMonth = monthsSinceStart % 2 === 0;
+            
+            if (isThisMonthBillingMonth && currentDay <= bill.dayOfMonth) {
+              // Due this month
+              occurrenceMonth = currentMonth;
+            } else {
+              // Calculate next billing month
+              let nextBillingMonth = currentMonth;
+              while (true) {
+                nextBillingMonth = (nextBillingMonth + 1) % 12;
+                if (nextBillingMonth < currentMonth) occurrenceYear++;
+                const monthDiff = (nextBillingMonth - startMonth + 12) % 12;
+                if (monthDiff % 2 === 0) {
+                  occurrenceMonth = nextBillingMonth;
+                  break;
+                }
+              }
+            }
+            
+            const nextOccurrence = new Date(occurrenceYear, occurrenceMonth, bill.dayOfMonth);
+            daysUntilDue = Math.floor((nextOccurrence - today) / (1000 * 60 * 60 * 24));
+            
+            if (daysUntilDue === 0) {
+              dueText = 'Due today';
+              div.classList.add('due-soon');
+            } else if (daysUntilDue <= 7) {
+              dueText = `Due in ${daysUntilDue} day${daysUntilDue > 1 ? 's' : ''}`;
+              div.classList.add('due-soon');
+            } else {
+              dueText = `Due ${nextOccurrence.toLocaleDateString()}`;
+            }
+          }
+
+          // Show frequency badge
+          const freqBadge = frequency === 'monthly' ? 'Monthly' : frequency === 'weekly' ? 'Weekly' : frequency === 'biweekly' ? 'Bi-weekly' : 'Bi-monthly';
+
+          div.innerHTML = `
+            <div>
+              <div class="bill-name">${bill.name} <span style="font-size: 10px; background: #e0e0e0; padding: 2px 6px; border-radius: 10px; text-transform: uppercase; font-weight: 600; color: #666;">${freqBadge}</span></div>
+              <div class="bill-info">${bill.category}</div>
+              <div class="bill-due">${dueText}</div>
+            </div>
+            <div style="text-align: right;">
+              <div class="bill-amount">$${bill.amount.toFixed(2)}</div>
+              <div style="display: flex; gap: 5px; margin-top: 5px; justify-content: flex-end;">
+                <button class="delete-btn" style="background: #667eea; font-size: 11px; padding: 4px 8px;" onclick="editBill('${doc.id}')">Edit</button>
+                <button class="delete-btn" style="font-size: 11px; padding: 4px 8px;" onclick="deleteBill('${doc.id}')">Delete</button>
+              </div>
+            </div>
+          `;
+
+          billsList.appendChild(div);
+        });
+      } catch (error) {
+        console.error('Error loading recurring bills:', error);
+      }
+    }
+
+    // Delete recurring bill
+    window.deleteBill = async function(billId) {
+      if (!confirm('Delete this recurring bill?')) return;
+
+      try {
+        await deleteDoc(doc(db, 'recurringBills', billId));
+
+        const user = auth.currentUser;
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        const householdId = userDoc.data().householdId;
+
+        await loadRecurringBills(householdId);
+        const currentMonth = new Date().toISOString().substring(0, 7);
+        await updateDashboard(householdId, currentMonth);
+      } catch (error) {
+        console.error('Error deleting bill:', error);
+      }
+    };
+
+    // Edit recurring bill
+    let currentEditingBillId = null;
+
+    window.editBill = async function(billId) {
+      currentEditingBillId = billId;
+
+      try {
+        // Fetch the bill data
+        const billDoc = await getDoc(doc(db, 'recurringBills', billId));
+        if (!billDoc.exists()) return;
+        const bill = billDoc.data();
+
+        // Load custom categories FIRST
+        const user = auth.currentUser;
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        const householdId = userDoc.data().householdId;
+        await populateEditBillCategories(householdId);
+
+        // Populate basic fields
+        document.getElementById('edit-bill-name').value = bill.name;
+        document.getElementById('edit-bill-amount').value = bill.amount;
+        document.getElementById('edit-bill-category').value = bill.category;
+
+        // Handle frequency and schedule
+        const frequency = bill.frequency || 'monthly';
+        const freqContainer = document.getElementById('edit-bill-frequency-container');
+        
+        if (frequency === 'monthly') {
+          freqContainer.innerHTML = `
+            <label style="font-size: 13px; color: #666; margin-bottom: 4px; display: block;">Frequency: Monthly</label>
+            <input type="number" id="edit-bill-day" placeholder="Day of month (1-31)" min="1" max="31" value="${bill.dayOfMonth}" required>
+          `;
+        } else if (frequency === 'weekly') {
+          const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+          freqContainer.innerHTML = `
+            <label style="font-size: 13px; color: #666; margin-bottom: 4px; display: block;">Frequency: Weekly on ${dayNames[bill.dayOfWeek]}</label>
+            <select id="edit-bill-day-of-week" required>
+              ${dayNames.map((name, i) => `<option value="${i}" ${i === bill.dayOfWeek ? 'selected' : ''}>${name}</option>`).join('')}
+            </select>
+          `;
+        } else if (frequency === 'biweekly') {
+          freqContainer.innerHTML = `
+            <label style="font-size: 13px; color: #666; margin-bottom: 4px; display: block;">Frequency: Every 2 weeks</label>
+            <input type="date" id="edit-bill-start-date" value="${bill.startDate}" required>
+          `;
+        } else if (frequency === 'bimonthly') {
+          const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+          freqContainer.innerHTML = `
+            <label style="font-size: 13px; color: #666; margin-bottom: 4px; display: block;">Frequency: Every 2 months</label>
+            <input type="number" id="edit-bill-day" placeholder="Day of month (1-31)" min="1" max="31" value="${bill.dayOfMonth}" required>
+            <select id="edit-bill-start-month" required style="margin-top: 8px;">
+              ${monthNames.map((name, i) => `<option value="${i}" ${i === bill.startMonth ? 'selected' : ''}>${name}</option>`).join('')}
+            </select>
+          `;
+        }
+
+        // Show modal
+        document.getElementById('edit-bill-modal').classList.add('active');
+      } catch (error) {
+        console.error('Error loading bill for edit:', error);
+      }
+    };
+
+    window.closeEditBillModal = function() {
+      document.getElementById('edit-bill-modal').classList.remove('active');
+      document.getElementById('edit-bill-error').textContent = '';
+      document.getElementById('edit-custom-bill-category').style.display = 'none';
+      currentEditingBillId = null;
+    };
+
+    // Handle edit bill category change
+    document.getElementById('edit-bill-category').addEventListener('change', function() {
+      const customInput = document.getElementById('edit-custom-bill-category');
+      if (this.value === '__custom__') {
+        customInput.style.display = 'block';
+        customInput.focus();
+      } else {
+        customInput.style.display = 'none';
+        customInput.value = '';
+      }
+    });
+
+    // Populate edit modal with custom categories
+    async function populateEditBillCategories(householdId) {
+      const customCategories = await loadCustomCategories(householdId);
+      const select = document.getElementById('edit-bill-category');
+      
+      // Remove old custom categories
+      const options = select.querySelectorAll('option[data-custom="true"]');
+      options.forEach(opt => opt.remove());
+      
+      // Add custom categories before "Add Custom" option
+      const customOption = select.querySelector('option[value="__custom__"]');
+      customCategories.forEach(category => {
+        const option = document.createElement('option');
+        option.value = category;
+        option.textContent = category.charAt(0).toUpperCase() + category.slice(1);
+        option.setAttribute('data-custom', 'true');
+        select.insertBefore(option, customOption);
+      });
+    }
+
+    // Save edited bill
+    document.getElementById('save-bill-btn').addEventListener('click', async () => {
+      if (!currentEditingBillId) return;
+
+      const name = document.getElementById('edit-bill-name').value;
+      const amount = document.getElementById('edit-bill-amount').value;
+      let category = document.getElementById('edit-bill-category').value;
+      const customCategory = document.getElementById('edit-custom-bill-category').value.trim();
+      const errorDiv = document.getElementById('edit-bill-error');
+      errorDiv.textContent = '';
+
+      // Handle custom category
+      if (category === '__custom__') {
+        if (!customCategory) {
+          errorDiv.textContent = 'Please enter a custom category name';
+          return;
+        }
+        category = customCategory.toLowerCase();
+      }
+
+      // Get the original bill to preserve frequency
+      const billDoc = await getDoc(doc(db, 'recurringBills', currentEditingBillId));
+      if (!billDoc.exists()) return;
+      const originalBill = billDoc.data();
+      const frequency = originalBill.frequency || 'monthly';
+
+      // Extract schedule data based on frequency
+      let scheduleData = {};
+      if (frequency === 'monthly') {
+        const dayOfMonth = document.getElementById('edit-bill-day')?.value;
+        if (!dayOfMonth) {
+          errorDiv.textContent = 'Please enter a day of month';
+          return;
+        }
+        const day = parseInt(dayOfMonth);
+        if (day < 1 || day > 31) {
+          errorDiv.textContent = 'Day must be between 1 and 31';
+          return;
+        }
+        scheduleData = { dayOfMonth: day };
+      } else if (frequency === 'weekly') {
+        const dayOfWeek = document.getElementById('edit-bill-day-of-week')?.value;
+        if (dayOfWeek === '' || dayOfWeek === undefined) {
+          errorDiv.textContent = 'Please select a day of week';
+          return;
+        }
+        scheduleData = { dayOfWeek: parseInt(dayOfWeek) };
+      } else if (frequency === 'biweekly') {
+        const startDate = document.getElementById('edit-bill-start-date')?.value;
+        if (!startDate) {
+          errorDiv.textContent = 'Please select a start date';
+          return;
+        }
+        scheduleData = { startDate: startDate };
+      } else if (frequency === 'bimonthly') {
+        const dayOfMonth = document.getElementById('edit-bill-day')?.value;
+        const startMonth = document.getElementById('edit-bill-start-month')?.value;
+        if (!dayOfMonth) {
+          errorDiv.textContent = 'Please enter a day of month';
+          return;
+        }
+        if (startMonth === '' || startMonth === undefined) {
+          errorDiv.textContent = 'Please select a starting month';
+          return;
+        }
+        const day = parseInt(dayOfMonth);
+        if (day < 1 || day > 31) {
+          errorDiv.textContent = 'Day must be between 1 and 31';
+          return;
+        }
+        scheduleData = { dayOfMonth: day, startMonth: parseInt(startMonth) };
+      }
+
+      if (!name || !amount || !category) {
+        errorDiv.textContent = 'Please fill in all fields';
+        return;
+      }
+
+      if (parseFloat(amount) <= 0) {
+        errorDiv.textContent = 'Amount must be greater than 0';
+        return;
+      }
+
+      try {
+        const user = auth.currentUser;
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        const householdId = userDoc.data().householdId;
+
+        // If custom category, add it to household
+        if (customCategory) {
+          category = await addCustomCategory(householdId, customCategory);
+          await populateCategoryDropdowns(householdId);
+          await populateEditBillCategories(householdId);
+        }
+
+        const billData = {
+          householdId: householdId,
+          name: name,
+          amount: parseFloat(amount),
+          category: category,
+          frequency: frequency,
+          ...scheduleData,
+          updatedAt: new Date().toISOString()
+        };
+
+        await setDoc(doc(db, 'recurringBills', currentEditingBillId), billData, { merge: true });
+
+        closeEditBillModal();
+
+        await loadRecurringBills(householdId);
+        await autoCreateRecurringBills(householdId);
+        const currentMonth = new Date().toISOString().substring(0, 7);
+        await updateDashboard(householdId, currentMonth);
+      } catch (error) {
+        errorDiv.textContent = 'Error updating bill: ' + error.message;
+        console.error('Error:', error);
+      }
+    });
+
+    // Auto-create recurring bills as transactions - DISABLED
+    // Bills are now only added to transactions when marked as paid
+    async function autoCreateRecurringBills(householdId) {
+      // No-op: transactions are created when a bill is marked paid
+    }
+
+    // Load budget
+    async function loadBudget(householdId) {
+      try {
+        const q = query(
+          collection(db, 'budgets'),
+          where('householdId', '==', householdId)
+        );
+
+        const querySnapshot = await getDocs(q);
+
+        if (!querySnapshot.empty) {
+          const budgetDoc = querySnapshot.docs[0];
+          currentBudget = { id: budgetDoc.id, ...budgetDoc.data() };
+
+          document.getElementById('budget-overview').classList.remove('hidden');
+          document.getElementById('budget-setup-form').classList.add('hidden');
+        } else {
+          currentBudget = null;
+          document.getElementById('budget-overview').classList.add('hidden');
+          document.getElementById('budget-setup-form').classList.remove('hidden');
+          await populateCategoryBudgetInputs();
+        }
+      } catch (error) {
+        console.error('Error loading budget:', error);
+      }
+    }
+
+    // Populate category budget inputs
+    async function populateCategoryBudgetInputs() {
+      const container = document.getElementById('category-budget-inputs');
+      container.innerHTML = '';
+
+      const categories = ['groceries', 'dining', 'utilities', 'rent', 'transportation',
+                         'entertainment', 'healthcare', 'shopping', 'subscriptions', 'other'];
+
+      categories.forEach(category => {
+        const div = document.createElement('div');
+        div.style.marginBottom = '10px';
+        div.innerHTML = `
+          <label style="display: block; font-size: 14px; margin-bottom: 3px; text-transform: capitalize;">${category}</label>
+          <input type="number" 
+                 id="budget-${category}" 
+                 placeholder="Optional limit" 
+                 step="0.01" 
+                 style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; box-sizing: border-box;">
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    // Save budget
+    document.getElementById('save-budget-btn').addEventListener('click', async () => {
+      const income = document.getElementById('budget-income').value;
+      const errorDiv = document.getElementById('budget-error');
+      errorDiv.textContent = '';
+
+      if (!income || parseFloat(income) <= 0) {
+        errorDiv.textContent = 'Please enter a valid monthly income';
+        return;
+      }
+
+      try {
+        const user = auth.currentUser;
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        const householdId = userDoc.data().householdId;
+
+        const categoryLimits = {};
+        const categories = ['groceries', 'dining', 'utilities', 'rent', 'transportation',
+                           'entertainment', 'healthcare', 'shopping', 'subscriptions', 'other'];
+
+        categories.forEach(category => {
+          const value = document.getElementById(`budget-${category}`).value;
+          if (value && parseFloat(value) > 0) {
+            categoryLimits[category] = parseFloat(value);
+          }
+        });
+
+        const budgetData = {
+          householdId: householdId,
+          income: parseFloat(income),
+          categoryLimits: categoryLimits,
+          createdBy: user.uid,
+          updatedAt: new Date().toISOString()
+        };
+
+        if (currentBudget) {
+          await setDoc(doc(db, 'budgets', currentBudget.id), budgetData);
+        } else {
+          await addDoc(collection(db, 'budgets'), budgetData);
+        }
+
+        await loadBudget(householdId);
+        const currentMonth = new Date().toISOString().substring(0, 7);
+        await updateBudgetDisplay(householdId, currentMonth);
+        await updateDashboard(householdId, currentMonth);
+      } catch (error) {
+        errorDiv.textContent = 'Error saving budget: ' + error.message;
+        console.error('Error:', error);
+      }
+    });
+
+    // Edit budget button
+    document.getElementById('edit-budget-btn').addEventListener('click', async () => {
+      if (currentBudget) {
+        document.getElementById('budget-income').value = currentBudget.income;
+
+        await populateCategoryBudgetInputs();
+
+        Object.entries(currentBudget.categoryLimits || {}).forEach(([category, limit]) => {
+          const input = document.getElementById(`budget-${category}`);
+          if (input) {
+            input.value = limit;
+          }
+        });
+      }
+
+      document.getElementById('budget-overview').classList.add('hidden');
+      document.getElementById('budget-setup-form').classList.remove('hidden');
+    });
+
+    // Update budget display
+    async function updateBudgetDisplay(householdId, yearMonth) {
+      if (!currentBudget) {
+        return;
+      }
+
+      try {
+        const q = query(
+          collection(db, 'transactions'),
+          where('householdId', '==', householdId)
+        );
+
+        const querySnapshot = await getDocs(q);
+
+        let totalIncome = 0;
+        let totalExpenses = 0;
+        let totalSavings = 0;
+        const categorySpending = {};
+
+        querySnapshot.forEach((doc) => {
+          const transaction = doc.data();
+          const txDate = new Date(transaction.date + 'T00:00:00');
+          const transactionMonth = `${txDate.getFullYear()}-${String(txDate.getMonth() + 1).padStart(2, '0')}`;
+
+          if (transactionMonth === yearMonth) {
+            if (transaction.type === 'income') {
+              totalIncome += transaction.amount;
+            } else if (transaction.type === 'expense') {
+              totalExpenses += transaction.amount;
+              if (!categorySpending[transaction.category]) {
+                categorySpending[transaction.category] = 0;
+              }
+              categorySpending[transaction.category] += transaction.amount;
+            } else if (transaction.type === 'savings') {
+              totalSavings += transaction.amount;
+            }
+          }
+        });
+
+        const budgetIncome = currentBudget.income;
+        const totalSpent = totalExpenses + totalSavings; // Savings counts toward money allocated
+        const leftover = budgetIncome - totalSpent;
+        const spentPercentage = (totalSpent / budgetIncome) * 100;
+
+        document.getElementById('budget-income-display').textContent = `$${budgetIncome.toFixed(2)}`;
+        document.getElementById('budget-spending-display').textContent = `$${totalExpenses.toFixed(2)}`;
+        document.getElementById('budget-leftover-display').textContent = `$${leftover.toFixed(2)}`;
+        document.getElementById('budget-leftover-display').style.color = leftover >= 0 ? '#28a745' : '#dc3545';
+
+        const overallBar = document.getElementById('overall-budget-bar');
+        const percentage = Math.min(spentPercentage, 100);
+        overallBar.style.width = `${percentage}%`;
+
+        if (spentPercentage < 80) {
+          overallBar.className = 'budget-progress-fill good';
+        } else if (spentPercentage < 100) {
+          overallBar.className = 'budget-progress-fill warning';
+        } else {
+          overallBar.className = 'budget-progress-fill over';
+        }
+
+        document.getElementById('overall-budget-percentage').textContent = `${spentPercentage.toFixed(1)}%`;
+
+        const categoryLimits = currentBudget.categoryLimits || {};
+        const categoryBudgetsList = document.getElementById('category-budgets-list');
+
+        if (Object.keys(categoryLimits).length === 0) {
+          categoryBudgetsList.innerHTML = '<p style="text-align: center; color: #666;">No category budgets set</p>';
+        } else {
+          categoryBudgetsList.innerHTML = '';
+
+          Object.entries(categoryLimits).forEach(([category, limit]) => {
+            const spent = categorySpending[category] || 0;
+            const percentageUsed = (spent / limit) * 100;
+
+            const categoryDiv = document.createElement('div');
+            categoryDiv.className = 'budget-category-item';
+
+            let statusClass = 'good';
+            if (percentageUsed >= 100) {
+              statusClass = 'over';
+            } else if (percentageUsed >= 80) {
+              statusClass = 'warning';
+            }
+
+            categoryDiv.innerHTML = `
+              <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                <span style="text-transform: capitalize; font-weight: bold;">${category}</span>
+                <span style="font-size: 14px;">$${spent.toFixed(2)} / $${limit.toFixed(2)}</span>
+              </div>
+              <div class="budget-progress-bar">
+                <div class="budget-progress-fill ${statusClass}" style="width: ${Math.min(percentageUsed, 100)}%"></div>
+              </div>
+              <div style="font-size: 11px; color: #666; margin-top: 3px;">${percentageUsed.toFixed(1)}% used</div>
+            `;
+
+            categoryBudgetsList.appendChild(categoryDiv);
+          });
+        }
+      } catch (error) {
+        console.error('Error updating budget display:', error);
+      }
+    }
+
+    // Cache for group drilldown
+    let dashboardGroupCache = { fixed: {}, discretionary: {} };
+
+    // Update dashboard
+    async function updateDashboard(householdId, yearMonth) {
+      try {
+        const q = query(
+          collection(db, 'transactions'),
+          where('householdId', '==', householdId)
+        );
+
+        const querySnapshot = await getDocs(q);
+
+        let totalExpenses = 0;
+        let fixedBills = 0;
+        let discretionary = 0;
+        let totalSavings = 0;
+
+        // Reset cache
+        dashboardGroupCache = { fixed: {}, discretionary: {}, savings: {} };
+
+        querySnapshot.forEach((doc) => {
+          const transaction = doc.data();
+          const txDate = new Date(transaction.date + 'T00:00:00');
+          const transactionMonth = `${txDate.getFullYear()}-${String(txDate.getMonth() + 1).padStart(2, '0')}`;
+
+          if (transactionMonth === yearMonth) {
+            if (transaction.type === 'expense') {
+              totalExpenses += transaction.amount;
+              // Use user-defined type map, default to discretionary if not set
+              const group = (categoryTypeMap[transaction.category] === 'fixed') ? 'fixed' : 'discretionary';
+
+              if (group === 'fixed') fixedBills += transaction.amount;
+              else discretionary += transaction.amount;
+
+              if (!dashboardGroupCache[group][transaction.category]) {
+                dashboardGroupCache[group][transaction.category] = [];
+              }
+              dashboardGroupCache[group][transaction.category].push({ id: doc.id, ...transaction });
+            } else if (transaction.type === 'savings') {
+              totalSavings += transaction.amount;
+              if (!dashboardGroupCache.savings[transaction.category]) {
+                dashboardGroupCache.savings[transaction.category] = [];
+              }
+              dashboardGroupCache.savings[transaction.category].push({ id: doc.id, ...transaction });
+            }
+          }
+        });
+
+        // Sort each category's transactions by date descending
+        ['fixed', 'discretionary', 'savings'].forEach(group => {
+          Object.keys(dashboardGroupCache[group]).forEach(cat => {
+            dashboardGroupCache[group][cat].sort((a, b) => new Date(b.date) - new Date(a.date));
+          });
+        });
+
+        document.getElementById('dashboard-fixed-bills').textContent = `$${fixedBills.toFixed(2)}`;
+        document.getElementById('dashboard-discretionary').textContent = `$${discretionary.toFixed(2)}`;
+        document.getElementById('dashboard-savings').textContent = `$${totalSavings.toFixed(2)}`;
+
+        if (currentBudget) {
+          const budgetIncome = currentBudget.income;
+          const totalAllocated = totalExpenses + totalSavings; // Both expenses and savings reduce leftover
+          const leftover = budgetIncome - totalAllocated;
+          const spentPercentage = (totalAllocated / budgetIncome) * 100;
+
+          document.getElementById('dashboard-income').textContent = `$${budgetIncome.toFixed(2)}`;
+          document.getElementById('dashboard-leftover').textContent = `$${leftover.toFixed(2)}`;
+          document.getElementById('dashboard-leftover').style.color = leftover >= 0 ? '#28a745' : '#dc3545';
+
+          const progressBar = document.getElementById('dashboard-progress-bar');
+          const percentage = Math.min(spentPercentage, 100);
+          progressBar.style.width = `${percentage}%`;
+
+          if (spentPercentage < 80) {
+            progressBar.className = 'budget-progress-fill good';
+          } else if (spentPercentage < 100) {
+            progressBar.className = 'budget-progress-fill warning';
+          } else {
+            progressBar.className = 'budget-progress-fill over';
+          }
+
+          document.getElementById('dashboard-progress-text').textContent = `${spentPercentage.toFixed(1)}% spent`;
+        } else {
+          document.getElementById('dashboard-income').textContent = '$0';
+          document.getElementById('dashboard-leftover').textContent = '$0';
+          document.getElementById('dashboard-progress-bar').style.width = '0%';
+          document.getElementById('dashboard-progress-text').textContent = 'No budget set';
+        }
+
+        // Update upcoming bills preview
+        const billsQuery = query(
+          collection(db, 'recurringBills'),
+          where('householdId', '==', householdId)
+        );
+
+        const billsSnapshot = await getDocs(billsQuery);
+        const upcomingBillsDiv = document.getElementById('upcoming-bills-preview');
+        upcomingBillsDiv.innerHTML = '';
+
+        if (billsSnapshot.empty) {
+          upcomingBillsDiv.innerHTML = '<p style="text-align: center; color: #666;">No recurring bills</p>';
+        } else {
+          const today = new Date();
+          const currentDay = today.getDate();
+          const currentMonth = today.toISOString().substring(0, 7);
+
+          // Fetch paid bills for this month
+          const paidBillsQuery = query(
+            collection(db, 'paidBills'),
+            where('householdId', '==', householdId),
+            where('month', '==', currentMonth)
+          );
+          const paidBillsSnapshot = await getDocs(paidBillsQuery);
+          const paidBillIds = new Set();
+          paidBillsSnapshot.forEach(doc => paidBillIds.add(doc.data().billId));
+
+          // Show bills due within 7 days OR overdue (unpaid)
+          const allBills = [];
+          billsSnapshot.forEach((doc) => {
+            const bill = doc.data();
+            const daysUntilDue = bill.dayOfMonth - currentDay;
+            const isPaid = paidBillIds.has(doc.id);
+
+            // Include if: (1) due within 7 days, OR (2) overdue and not paid
+            if ((daysUntilDue >= 0 && daysUntilDue <= 7) || (daysUntilDue < 0 && !isPaid)) {
+              allBills.push({ ...bill, id: doc.id, daysUntilDue, isPaid });
+            }
+          });
+
+          // Sort: unpaid overdue first, then unpaid upcoming, then paid
+          allBills.sort((a, b) => {
+            if (a.isPaid !== b.isPaid) return a.isPaid ? 1 : -1;
+            // Among unpaid, show overdue first
+            if (!a.isPaid && !b.isPaid) {
+              if ((a.daysUntilDue < 0) !== (b.daysUntilDue < 0)) {
+                return a.daysUntilDue < 0 ? -1 : 1;
+              }
+            }
+            return a.daysUntilDue - b.daysUntilDue;
+          });
+
+          if (allBills.length === 0) {
+            upcomingBillsDiv.innerHTML = '<p style="text-align: center; color: #666;">No bills due in the next 7 days</p>';
+          } else {
+            allBills.forEach(bill => {
+              const div = document.createElement('div');
+              const isOverdue = bill.daysUntilDue < 0 && !bill.isPaid;
+              div.className = `bill-item ${bill.isPaid ? 'paid' : isOverdue ? 'overdue' : 'due-soon'}`;
+              div.style.marginBottom = '10px';
+
+              let dueText = '';
+              if (bill.daysUntilDue < 0) {
+                const daysOverdue = Math.abs(bill.daysUntilDue);
+                dueText = `Overdue by ${daysOverdue} day${daysOverdue > 1 ? 's' : ''}`;
+              } else if (bill.daysUntilDue === 0) {
+                dueText = 'Due today';
+              } else {
+                dueText = `Due in ${bill.daysUntilDue} day${bill.daysUntilDue > 1 ? 's' : ''}`;
+              }
+
+              div.innerHTML = `
+                <div>
+                  <div class="bill-name" style="${bill.isPaid ? 'text-decoration: line-through; color: #999;' : ''}">${bill.name}</div>
+                  <div class="bill-due" style="margin-top: 3px; ${isOverdue ? 'color: #dc3545; font-weight: 700;' : ''}">${bill.isPaid ? '' : dueText}</div>
+                  ${bill.isPaid ? '<span class="bill-paid-badge">✓ Paid</span>' : isOverdue ? '<span style="display: inline-flex; align-items: center; gap: 4px; background: #ffe6e6; color: #dc3545; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;">⚠ Overdue</span>' : ''}
+                </div>
+                <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px;">
+                  <div class="bill-amount" style="${bill.isPaid ? 'color: #999; text-decoration: line-through;' : ''}">$${bill.amount.toFixed(2)}</div>
+                  ${bill.isPaid
+                    ? `<button class="delete-btn" style="font-size: 11px; padding: 4px 8px; background: #6c757d;" onclick="unmarkBillPaid('${bill.id}', '${currentMonth}')">Undo</button>`
+                    : `<button class="mark-paid-btn" onclick="markBillPaid('${bill.id}', '${currentMonth}')">Mark Paid</button>`
+                  }
+                </div>
+              `;
+
+              upcomingBillsDiv.appendChild(div);
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error updating dashboard:', error);
+      }
+    }
+
+    // Mark bill as paid — creates a real transaction
+    window.markBillPaid = async function(billId, month) {
+      try {
+        const user = auth.currentUser;
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        const householdId = userDoc.data().householdId;
+
+        // Get the bill details
+        const billDoc = await getDoc(doc(db, 'recurringBills', billId));
+        if (!billDoc.exists()) return;
+        const bill = billDoc.data();
+
+        // Create the actual transaction
+        const billDate = `${month}-${String(bill.dayOfMonth).padStart(2, '0')}`;
+        const transactionRef = await addDoc(collection(db, 'transactions'), {
+          householdId: householdId,
+          userId: user.uid,
+          type: 'expense',
+          amount: bill.amount,
+          category: bill.category,
+          description: `${bill.name}`,
+          date: billDate,
+          createdAt: new Date().toISOString(),
+          isRecurring: true
+        });
+
+        // Store paid record with the transaction ID so we can delete it if undone
+        await addDoc(collection(db, 'paidBills'), {
+          billId: billId,
+          transactionId: transactionRef.id,
+          householdId: householdId,
+          month: month,
+          paidBy: user.uid,
+          paidAt: new Date().toISOString()
+        });
+
+        // Refresh all displays
+        const currentMonth = new Date().toISOString().substring(0, 7);
+        await loadTransactions(householdId);
+        await loadCategorySpending(householdId, currentMonth);
+        await updateBudgetDisplay(householdId, currentMonth);
+        await updateDashboard(householdId, currentMonth);
+      } catch (error) {
+        console.error('Error marking bill paid:', error);
+      }
+    };
+
+    // Undo mark bill as paid — deletes the transaction too
+    window.unmarkBillPaid = async function(billId, month) {
+      try {
+        const user = auth.currentUser;
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        const householdId = userDoc.data().householdId;
+
+        // Find the paid record to get the transaction ID
+        const q = query(
+          collection(db, 'paidBills'),
+          where('householdId', '==', householdId),
+          where('billId', '==', billId),
+          where('month', '==', month)
+        );
+        const snapshot = await getDocs(q);
+
+        for (const paidDoc of snapshot.docs) {
+          const transactionId = paidDoc.data().transactionId;
+
+          // Delete the transaction if it exists
+          if (transactionId) {
+            await deleteDoc(doc(db, 'transactions', transactionId));
+          }
+
+          // Delete the paid record
+          await deleteDoc(doc(db, 'paidBills', paidDoc.id));
+        }
+
+        // Refresh all displays
+        const currentMonth = new Date().toISOString().substring(0, 7);
+        await loadTransactions(householdId);
+        await loadCategorySpending(householdId, currentMonth);
+        await updateBudgetDisplay(householdId, currentMonth);
+        await updateDashboard(householdId, currentMonth);
+      } catch (error) {
+        console.error('Error unmarking bill paid:', error);
+      }
+    };
+
+    // Listen for auth state changes
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const householdId = await getUserHousehold(user.uid);
+
+        if (householdId) {
+          const householdData = await loadHouseholdData(householdId);
+
+          signupForm.classList.add('hidden');
+          loginForm.classList.add('hidden');
+          householdSetup.classList.add('hidden');
+          createHouseholdForm.classList.add('hidden');
+          joinHouseholdForm.classList.add('hidden');
+          mainApp.classList.remove('hidden');
+
+          if (householdData) {
+            document.getElementById('current-household-name').textContent = householdData.name;
+            document.getElementById('household-invite-code').textContent = householdData.inviteCode;
+          }
+
+          await autoCreateRecurringBills(householdId);
+
+          const currentMonth = new Date().toISOString().substring(0, 7);
+          await loadCategorySettings(householdId);
+          await populateCategoryDropdowns(householdId);
+          await loadTransactions(householdId);
+          await loadCategorySpending(householdId, currentMonth);
+          await loadRecurringBills(householdId);
+          await loadBudget(householdId);
+          await updateBudgetDisplay(householdId, currentMonth);
+          await updateDashboard(householdId, currentMonth);
+          await renderCategorySettings(householdId);
+        } else {
+          signupForm.classList.add('hidden');
+          loginForm.classList.add('hidden');
+          householdSetup.classList.remove('hidden');
+          createHouseholdForm.classList.add('hidden');
+          joinHouseholdForm.classList.add('hidden');
+          mainApp.classList.add('hidden');
+        }
+
+        console.log('User authenticated:', user.uid);
+      } else {
+        signupForm.classList.remove('hidden');
+        loginForm.classList.add('hidden');
+        householdSetup.classList.add('hidden');
+        createHouseholdForm.classList.add('hidden');
+        joinHouseholdForm.classList.add('hidden');
+        mainApp.classList.add('hidden');
+      }
+    });
+  </script>
+
+</body>
+</html>
